@@ -4,69 +4,69 @@ import './App.css';
 
 const treinosSemana = {
   1: {
-    titulo: "Peito, Ombro e Tríceps (PUSH)",
+    titulo: "Peito, Ombro e Tríceps",
     exercicios: [
-      'Supino reto com barra',
-      'Supino inclinado com halteres',
-      'Desenvolvimento com halteres',
-      'Elevação lateral',
-      'Tríceps corda na polia',
-      'Tríceps testa com barra'
+      'Supino reto com barra – 4x10',
+      'Supino inclinado com halteres – 3x10',
+      'Desenvolvimento com halteres – 3x10',
+      'Elevação lateral – 3x12',
+      'Tríceps corda na polia – 3x12',
+      'Tríceps testa com barra – 3x10'
     ]
   },
   2: {
-    titulo: "Costas e Bíceps (PULL)",
+    titulo: "Costas e Bíceps",
     exercicios: [
-      'Puxada na frente na polia alta',
-      'Remada baixa',
-      'Remada unilateral com halter',
-      'Rosca direta com barra',
-      'Rosca alternada com halteres',
-      'Face pull'
+      'Puxada na frente na polia alta – 4x10',
+      'Remada baixa – 3x10',
+      'Remada unilateral com halter – 3x10',
+      'Rosca direta com barra – 3x10',
+      'Rosca alternada com halteres – 3x12',
+      'Face pull – 3x15'
     ]
   },
   3: {
     titulo: "Pernas e Abdômen",
     exercicios: [
-      'Agachamento livre',
-      'Leg press',
-      'Cadeira extensora',
-      'Mesa flexora',
-      'Elevação de panturrilhas',
-      'Prancha abdominal',
-      'Abdominal infra'
+      'Agachamento livre – 4x10',
+      'Leg press – 3x10',
+      'Cadeira extensora – 3x12',
+      'Mesa flexora – 3x12',
+      'Elevação de panturrilhas – 3x15',
+      'Prancha abdominal – 3x30 segundos',
+      'Abdominal infra – 3x15'
     ]
   },
   4: {
     titulo: "PUSH (variações)",
     exercicios: [
-      'Supino reto com halteres',
-      'Crucifixo inclinado',
-      'Desenvolvimento Arnold',
-      'Elevação frontal',
-      'Tríceps francês',
-      'Mergulho em banco'
+      'Supino reto com halteres – 4x10',
+      'Crucifixo inclinado – 3x12',
+      'Desenvolvimento Arnold – 3x10',
+      'Elevação frontal – 3x12',
+      'Tríceps francês – 3x10',
+      'Mergulho em banco – 3x12'
     ]
   },
   5: {
     titulo: "PULL (variações)",
     exercicios: [
-      'Barra fixa assistida ou puxada aberta',
-      'Remada curvada com barra',
-      'Rosca scott',
-      'Rosca martelo',
-      'Encolhimento para trapézio',
-      'Abdominal oblíquo'
+      'Barra fixa assistida ou puxada aberta – 4x10',
+      'Remada curvada com barra – 3x10',
+      'Rosca scott – 3x12',
+      'Rosca martelo – 3x12',
+      'Encolhimento para trapézio – 3x15',
+      'Abdominal oblíquo – 3x15'
     ]
   },
   6: {
     titulo: "Pernas + Funcional",
     exercicios: [
-      'Agachamento sumô com halter',
-      'Afundo alternado',
-      'Stiff com halteres',
-      'Panturrilha no leg',
-      'Circuito leve: corda, prancha e agachamento'
+      'Agachamento sumô com halter – 3x12',
+      'Afundo alternado – 3x10 por perna',
+      'Stiff com halteres – 3x12',
+      'Panturrilha no leg – 3x20',
+      'Circuito leve: corda, prancha e agachamento – 10 min'
     ]
   }
 };
@@ -96,12 +96,23 @@ const App = () => {
   };
 
   const mensagensMotivacionais = [
-    "Parabéns! Você arrasou no treino de hoje! 💪",
-    "Mais um treino concluído! Continue nesse ritmo! 🔥",
-    "Excelente trabalho! Cada treino te deixa mais forte! 💯",
-    "Você está cada vez mais perto dos seus objetivos! 🏆",
-    "Superação diária! Seu corpo agradece pelo esforço! 🌟"
-  ];
+  "Parabéns! Você arrasou no treino de hoje! 💪",
+  "Mais um treino concluído! Continue nesse ritmo! 🔥",
+  "Excelente trabalho! Cada treino te deixa mais forte! 💯",
+  "Você está cada vez mais perto dos seus objetivos! 🏆",
+  "Superação diária! Seu corpo agradece pelo esforço! 🌟",
+  "Fortalece-te e sê corajoso, pois YHWH é contigo por onde quer que andares. (Josué 1:9) 🛡️",
+  "O justo é firme como o leão. (Provérbios 28:1) 🦁",
+  "Com meu Deus salto muralhas. (Salmos 18:29) 🧗",
+  "A sabedoria fortalece mais ao sábio do que dez poderosos numa cidade. (Eclesiastes 7:19) 🧠",
+  "O homem disciplinado domina a si mesmo melhor do que aquele que conquista cidades. (Provérbios 16:32) 🎯",
+  "A força não vem dos músculos, mas do coração alinhado com o Eterno. 🕊️",
+  "YHWH adestra minhas mãos para a batalha e meus braços para o combate. (Salmos 18:34) ⚔️",
+  "Sete vezes cai o justo, e se levanta. (Provérbios 24:16) 🔁",
+  "O temor do Eterno é o princípio da sabedoria — e o princípio da verdadeira força. (Provérbios 1:7) 🛤️",
+  "Confia no Eterno com todo o teu coração, e Ele endireitará os teus caminhos. (Provérbios 3:5-6) 🚀"
+];
+
 
   const concluirTreino = () => {
     const todosExercicios = {};
