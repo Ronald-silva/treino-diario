@@ -1,3 +1,17 @@
+/*
+  ═══════════════════════════════════════════════════════════════
+  TREINO DIÁRIO — Design System
+  Paleta baseada em Psicologia das Cores:
+
+  • Dourado (#D4A253 / amber)  → Sabedoria, conquista, ouro bíblico
+  • Azul profundo (overlay)    → Foco, disciplina, confiança
+  • Verde floresta (emerald)   → Crescimento, saúde, vitalidade
+  • Carmesim (red-700)         → Força, coragem, sangue do esforço
+  • Marfim (off-white)         → Pureza, calma, legibilidade
+  • Fundo: Midnight navy       → Profundidade, seriedade, mistério
+  ═══════════════════════════════════════════════════════════════
+*/
+
 html, body {
   margin: 0;
   padding: 0;
@@ -13,84 +27,192 @@ html, body {
   padding: 0;
 }
 
+/* ─── Background com overlay midnight navy ─────────────────────────────── */
+
 .bg-image {
-  background-image: url('./assets/bg-1.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-  position: relative !important;
+  background-image: url('./assets/bg-gym.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  position: relative;
 }
 
 .bg-image::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Filtro preto com 50% de opacidade */
+  /* Midnight navy overlay — transmite foco e seriedade */
+  background: linear-gradient(
+    160deg,
+    rgba(8, 12, 30, 0.90) 0%,
+    rgba(12, 18, 42, 0.88) 40%,
+    rgba(6, 10, 24, 0.92) 100%
+  );
   z-index: 0;
 }
 
 .bg-image > * {
   position: relative;
-  z-index: 1; /* Coloca o conteúdo acima do filtro preto */
+  z-index: 1;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ─── Glass cards — tom azul navy sutil ────────────────────────────────── */
+
+.glass-card {
+  background: rgba(14, 20, 40, 0.60);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(180, 160, 120, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(212, 162, 83, 0.04);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.glass-card-alt {
+  background: rgba(20, 28, 55, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(180, 160, 120, 0.06);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* ─── Progress bar glow (dourado = conquista) ──────────────────────────── */
+
+.progress-glow {
+  box-shadow: 0 0 14px rgba(212, 162, 83, 0.45), 0 0 4px rgba(212, 162, 83, 0.25);
 }
 
-.card {
-  padding: 2em;
+/* ─── Custom checkbox (dourado = disciplina cumprida) ──────────────────── */
+
+.custom-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(212, 162, 83, 0.20);
+  border-radius: 6px;
+  background: rgba(14, 20, 40, 0.5);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  position: relative;
 }
 
-/* Animação para o modal de parabéns */
-@keyframes bounce-subtle {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+.custom-check:checked {
+  background: linear-gradient(135deg, #D4A253, #B8860B);
+  border-color: #D4A253;
+  box-shadow: 0 0 10px rgba(212, 162, 83, 0.35);
 }
 
-.animate-bounce-subtle {
-  animation: bounce-subtle 2s ease-in-out infinite;
+.custom-check:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #0B1020;
+  font-size: 14px;
+  font-weight: 800;
 }
 
-/* Estilos para os botões de ação */
-.card-buttons {
+.custom-check:hover {
+  border-color: rgba(212, 162, 83, 0.45);
+  box-shadow: 0 0 8px rgba(212, 162, 83, 0.12);
+}
+
+/* ─── Animações ────────────────────────────────────────────────────────── */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(212, 162, 83, 0.3); }
+  50% { box-shadow: 0 0 22px rgba(212, 162, 83, 0.55); }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ─── Botões de carga (psicologia: verde=progresso, azul=estável, vermelho=alerta) */
+
+.load-btn {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(212, 162, 83, 0.10);
+  background: rgba(14, 20, 40, 0.5);
+  color: rgba(245, 240, 230, 0.40);
+}
+
+.load-btn:hover {
+  background: rgba(212, 162, 83, 0.08);
+  color: rgba(245, 240, 230, 0.70);
+}
+
+/* Verde floresta = crescimento muscular */
+.load-btn.active-up {
+  background: rgba(22, 163, 74, 0.18);
+  border-color: rgba(22, 163, 74, 0.50);
+  color: #4ADE80;
+  box-shadow: 0 0 6px rgba(22, 163, 74, 0.15);
+}
+
+/* Azul profundo = estabilidade, manutenção */
+.load-btn.active-same {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.45);
+  color: #60A5FA;
+}
+
+/* Carmesim = atenção, alerta de redução */
+.load-btn.active-down {
+  background: rgba(185, 28, 28, 0.18);
+  border-color: rgba(185, 28, 28, 0.50);
+  color: #F87171;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(212, 162, 83, 0.15); border-radius: 4px; }
+
+/* ─── Section title ────────────────────────────────────────────────────── */
+
+.section-title {
   display: flex;
-  gap: 10px;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(212, 162, 83, 0.50);
 }
 
-.read-the-docs {
-  color: #888;
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(212, 162, 83, 0.18), transparent);
+}
+
+/* ─── Dia hebraico decoração ───────────────────────────────────────────── */
+
+.hebrew-text {
+  font-family: 'Segoe UI', 'Noto Sans Hebrew', sans-serif;
+  letter-spacing: 2px;
 }
