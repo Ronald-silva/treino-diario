@@ -308,8 +308,13 @@ export default function App() {
               </li>
             ))}
           </ul>
-          <div className="mt-2 text-center text-[10px] text-white/25 font-semibold uppercase tracking-wider">
-            Cardápio rotativo — muda automaticamente todo dia
+          <div className="mt-2 space-y-0.5 text-center">
+            <div className="text-[10px] text-white/25 font-semibold uppercase tracking-wider">
+              Cardápio rotativo — muda todo dia
+            </div>
+            <div className="text-[9px] text-amber-600/25 font-medium tracking-wide">
+              Puro · Nordestino · Econômico · Vayikra 11
+            </div>
           </div>
           <div className="mt-3">
             <ProgressBar pct={pctDieta} color="from-emerald-400 to-green-500" />
