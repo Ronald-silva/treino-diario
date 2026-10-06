@@ -1,182 +1,211 @@
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
-/** Dia do ano (1-366) — usado como seed para rotação diária */
+/** Dia do ano (1-366) — usado como seed para os conteúdos diários */
 export function getDiaDoAno() {
   const now = new Date();
   const start = new Date(now.getFullYear(), 0, 0);
   return Math.floor((now - start) / (1000 * 60 * 60 * 24));
 }
 
-// ─── Banco de exercícios com variações amplas por grupo muscular ─────────
-// Cada slot tem múltiplas variantes. A rotação escolhe 1 por slot por dia.
+const REGEX_PRESCRICAO = /(\d+)\s*x\s*(\d+)(?:\s*[–-]\s*(\d+))?/i;
+
+/** Converte prescrições como 4x10 e 3x8-12 para dados numéricos. */
+export function parsePrescricao(prescricao) {
+  const match = REGEX_PRESCRICAO.exec(prescricao);
+
+  if (!match) {
+    throw new Error(`Prescrição inválida: ${prescricao}`);
+  }
+
+  const series = Number(match[1]);
+  const repsMin = Number(match[2]);
+  const repsMax = Number(match[3] ?? match[2]);
+
+  return { series, repsMin, repsMax };
+}
+
+function criarExercicio(id, nome, grupo, equipamento, prescricao, rirAlvo = 2) {
+  return {
+    id,
+    nome,
+    grupo,
+    equipamento,
+    ...parsePrescricao(prescricao),
+    rirAlvo,
+  };
+}
+
+function criarSlot(principal, ...alternativas) {
+  return { principal, alternativas };
+}
+
+// ─── Banco de exercícios fixo, com alternativas preservadas ──────────────
+// A ficha sempre usa `principal`. As alternativas ficam disponíveis para uma
+// futura troca manual, sem afetar a identidade ou o histórico do exercício.
 
 export const exerciciosPorGrupo = {
   peito: [
     // Slot 1 — Composto principal
-    [
-      'Supino reto com barra – 4x10',
-      'Supino reto com halteres – 4x10',
-      'Supino máquina – 4x10',
-      'Supino reto barra guiada (Smith) – 4x10',
-    ],
+    criarSlot(
+      criarExercicio('supino-reto-barra', 'Supino reto com barra', 'peito', 'barra', '4x10'),
+      criarExercicio('supino-reto-halteres', 'Supino reto com halteres', 'peito', 'halteres', '4x10'),
+      criarExercicio('supino-maquina', 'Supino máquina', 'peito', 'máquina', '4x10'),
+      criarExercicio('supino-reto-smith', 'Supino reto barra guiada (Smith)', 'peito', 'smith', '4x10'),
+    ),
     // Slot 2 — Inclinado / ângulo superior
-    [
-      'Supino inclinado com halteres – 3x10',
-      'Supino inclinado barra – 3x10',
-      'Crucifixo inclinado halteres – 3x12',
-      'Crossover polia alta (peitoral sup.) – 3x12',
-    ],
+    criarSlot(
+      criarExercicio('supino-inclinado-halteres', 'Supino inclinado com halteres', 'peito', 'halteres', '3x10'),
+      criarExercicio('supino-inclinado-barra', 'Supino inclinado com barra', 'peito', 'barra', '3x10'),
+      criarExercicio('crucifixo-inclinado-halteres', 'Crucifixo inclinado com halteres', 'peito', 'halteres', '3x12'),
+      criarExercicio('crossover-polia-alta', 'Crossover na polia alta', 'peito', 'polia', '3x12'),
+    ),
   ],
   ombro: [
-    [
-      'Desenvolvimento com halteres – 3x10',
-      'Desenvolvimento Arnold – 3x10',
-      'Desenvolvimento máquina – 3x10',
-      'Desenvolvimento barra militar – 3x10',
-    ],
-    [
-      'Elevação lateral halteres – 3x12',
-      'Elevação lateral cabo – 3x12',
-      'Elevação lateral máquina – 3x12',
-      'Elevação frontal halteres – 3x12',
-    ],
+    criarSlot(
+      criarExercicio('desenvolvimento-halteres', 'Desenvolvimento com halteres', 'ombro', 'halteres', '3x10'),
+      criarExercicio('desenvolvimento-arnold', 'Desenvolvimento Arnold', 'ombro', 'halteres', '3x10'),
+      criarExercicio('desenvolvimento-maquina', 'Desenvolvimento máquina', 'ombro', 'máquina', '3x10'),
+      criarExercicio('desenvolvimento-barra-militar', 'Desenvolvimento barra militar', 'ombro', 'barra', '3x10'),
+    ),
+    criarSlot(
+      criarExercicio('elevacao-lateral-halteres', 'Elevação lateral com halteres', 'ombro', 'halteres', '3x12'),
+      criarExercicio('elevacao-lateral-cabo', 'Elevação lateral no cabo', 'ombro', 'cabo', '3x12'),
+      criarExercicio('elevacao-lateral-maquina', 'Elevação lateral máquina', 'ombro', 'máquina', '3x12'),
+      criarExercicio('elevacao-frontal-halteres', 'Elevação frontal com halteres', 'ombro', 'halteres', '3x12'),
+    ),
   ],
   triceps: [
-    [
-      'Tríceps corda na polia – 3x12',
-      'Tríceps barra reta polia – 3x12',
-      'Tríceps francês com halteres – 3x10',
-      'Tríceps barra V polia – 3x12',
-    ],
-    [
-      'Tríceps testa com barra – 3x10',
-      'Mergulho em banco – 3x12',
-      'Tríceps kickback – 3x12',
-      'Tríceps coice no cabo – 3x12',
-    ],
+    criarSlot(
+      criarExercicio('triceps-corda-polia', 'Tríceps corda na polia', 'triceps', 'polia', '3x12'),
+      criarExercicio('triceps-barra-reta-polia', 'Tríceps barra reta na polia', 'triceps', 'polia', '3x12'),
+      criarExercicio('triceps-frances-halter', 'Tríceps francês com halter', 'triceps', 'halter', '3x10'),
+      criarExercicio('triceps-barra-v-polia', 'Tríceps barra V na polia', 'triceps', 'polia', '3x12'),
+    ),
+    criarSlot(
+      criarExercicio('triceps-testa-barra', 'Tríceps testa com barra', 'triceps', 'barra', '3x10'),
+      criarExercicio('mergulho-banco', 'Mergulho em banco', 'triceps', 'banco', '3x12'),
+      criarExercicio('triceps-kickback', 'Tríceps kickback', 'triceps', 'halter', '3x12'),
+      criarExercicio('triceps-coice-cabo', 'Tríceps coice no cabo', 'triceps', 'cabo', '3x12'),
+    ),
   ],
   costas: [
-    [
-      'Puxada frente polia alta – 4x10',
-      'Barra fixa (assistida ou livre) – 4x8',
-      'Puxada triângulo – 4x10',
-      'Puxada aberta – 4x10',
-    ],
-    [
-      'Remada baixa cabo – 3x10',
-      'Remada curvada com barra – 3x10',
-      'Remada cavalinho máquina – 3x10',
-      'Remada sentado unilateral cabo – 3x10',
-    ],
-    [
-      'Remada unilateral halter – 3x10',
-      'Pulldown unilateral cabo – 3x10',
-      'Remada serrote banco inclinado – 3x10',
-      'Pullover halter – 3x12',
-    ],
+    criarSlot(
+      criarExercicio('puxada-frente-polia-alta', 'Puxada frente na polia alta', 'costas', 'polia', '4x10'),
+      criarExercicio('barra-fixa', 'Barra fixa assistida ou livre', 'costas', 'barra fixa', '4x8'),
+      criarExercicio('puxada-triangulo', 'Puxada com triângulo', 'costas', 'polia', '4x10'),
+      criarExercicio('puxada-aberta', 'Puxada aberta', 'costas', 'polia', '4x10'),
+    ),
+    criarSlot(
+      criarExercicio('remada-baixa-cabo', 'Remada baixa no cabo', 'costas', 'cabo', '3x10'),
+      criarExercicio('remada-curvada-barra', 'Remada curvada com barra', 'costas', 'barra', '3x10'),
+      criarExercicio('remada-cavalinho-maquina', 'Remada cavalinho máquina', 'costas', 'máquina', '3x10'),
+      criarExercicio('remada-sentado-unilateral-cabo', 'Remada sentada unilateral no cabo', 'costas', 'cabo', '3x10'),
+    ),
+    criarSlot(
+      criarExercicio('remada-unilateral-halter', 'Remada unilateral com halter', 'costas', 'halter', '3x10'),
+      criarExercicio('pulldown-unilateral-cabo', 'Pulldown unilateral no cabo', 'costas', 'cabo', '3x10'),
+      criarExercicio('remada-serrote-banco-inclinado', 'Remada serrote no banco inclinado', 'costas', 'halter', '3x10'),
+      criarExercicio('pullover-halter', 'Pullover com halter', 'costas', 'halter', '3x12'),
+    ),
   ],
   biceps: [
-    [
-      'Rosca direta com barra – 3x10',
-      'Rosca scott máquina – 3x12',
-      'Rosca no cabo barra reta – 3x12',
-      'Rosca direta com halteres – 3x10',
-    ],
-    [
-      'Rosca alternada halteres – 3x12',
-      'Rosca martelo – 3x12',
-      'Rosca concentrada – 3x12',
-      'Rosca inversa barra – 3x12',
-    ],
+    criarSlot(
+      criarExercicio('rosca-direta-barra', 'Rosca direta com barra', 'biceps', 'barra', '3x10'),
+      criarExercicio('rosca-scott-maquina', 'Rosca Scott máquina', 'biceps', 'máquina', '3x12'),
+      criarExercicio('rosca-cabo-barra-reta', 'Rosca no cabo com barra reta', 'biceps', 'cabo', '3x12'),
+      criarExercicio('rosca-direta-halteres', 'Rosca direta com halteres', 'biceps', 'halteres', '3x10'),
+    ),
+    criarSlot(
+      criarExercicio('rosca-alternada-halteres', 'Rosca alternada com halteres', 'biceps', 'halteres', '3x12'),
+      criarExercicio('rosca-martelo', 'Rosca martelo', 'biceps', 'halteres', '3x12'),
+      criarExercicio('rosca-concentrada', 'Rosca concentrada', 'biceps', 'halter', '3x12'),
+      criarExercicio('rosca-inversa-barra', 'Rosca inversa com barra', 'biceps', 'barra', '3x12'),
+    ),
   ],
   pernas_quad: [
-    [
-      'Agachamento livre – 4x10',
-      'Agachamento hack – 4x10',
-      'Agachamento no Smith – 4x10',
-      'Agachamento frontal – 4x8',
-    ],
-    [
-      'Leg press 45° – 3x12',
-      'Leg press horizontal – 3x12',
-      'Agachamento sumô halter – 3x12',
-      'Passada búlgara – 3x10/perna',
-    ],
-    [
-      'Cadeira extensora – 3x12',
-      'Afundo alternado – 3x10/perna',
-      'Avanço com halteres – 3x10/perna',
-      'Sissy squat – 3x12',
-    ],
+    criarSlot(
+      criarExercicio('agachamento-livre', 'Agachamento livre', 'pernas_quad', 'barra', '4x10'),
+      criarExercicio('agachamento-hack', 'Agachamento hack', 'pernas_quad', 'máquina', '4x10'),
+      criarExercicio('agachamento-smith', 'Agachamento no Smith', 'pernas_quad', 'smith', '4x10'),
+      criarExercicio('agachamento-frontal', 'Agachamento frontal', 'pernas_quad', 'barra', '4x8'),
+    ),
+    criarSlot(
+      criarExercicio('leg-press-45', 'Leg press 45°', 'pernas_quad', 'máquina', '3x12'),
+      criarExercicio('leg-press-horizontal', 'Leg press horizontal', 'pernas_quad', 'máquina', '3x12'),
+      criarExercicio('agachamento-sumo-halter', 'Agachamento sumô com halter', 'pernas_quad', 'halter', '3x12'),
+      criarExercicio('passada-bulgara', 'Passada búlgara por perna', 'pernas_quad', 'halteres', '3x10'),
+    ),
+    criarSlot(
+      criarExercicio('cadeira-extensora', 'Cadeira extensora', 'pernas_quad', 'máquina', '3x12'),
+      criarExercicio('afundo-alternado', 'Afundo alternado por perna', 'pernas_quad', 'peso corporal', '3x10'),
+      criarExercicio('avanco-halteres', 'Avanço com halteres por perna', 'pernas_quad', 'halteres', '3x10'),
+      criarExercicio('sissy-squat', 'Sissy squat', 'pernas_quad', 'peso corporal', '3x12'),
+    ),
   ],
   pernas_post: [
-    [
-      'Mesa flexora – 3x12',
-      'Cadeira flexora – 3x12',
-      'Stiff com barra – 3x10',
-      'Stiff com halteres – 3x12',
-    ],
-    [
-      'Elevação panturrilhas em pé – 3x15',
-      'Panturrilha no leg press – 3x20',
-      'Panturrilha sentado – 3x15',
-      'Panturrilha unilateral – 3x12/lado',
-    ],
+    criarSlot(
+      criarExercicio('mesa-flexora', 'Mesa flexora', 'pernas_post', 'máquina', '3x12'),
+      criarExercicio('cadeira-flexora', 'Cadeira flexora', 'pernas_post', 'máquina', '3x12'),
+      criarExercicio('stiff-barra', 'Stiff com barra', 'pernas_post', 'barra', '3x10'),
+      criarExercicio('stiff-halteres', 'Stiff com halteres', 'pernas_post', 'halteres', '3x12'),
+    ),
+    criarSlot(
+      criarExercicio('panturrilha-em-pe', 'Elevação de panturrilhas em pé', 'pernas_post', 'máquina', '3x15'),
+      criarExercicio('panturrilha-leg-press', 'Panturrilha no leg press', 'pernas_post', 'máquina', '3x20'),
+      criarExercicio('panturrilha-sentado', 'Panturrilha sentado', 'pernas_post', 'máquina', '3x15'),
+      criarExercicio('panturrilha-unilateral', 'Panturrilha unilateral por lado', 'pernas_post', 'peso corporal', '3x12'),
+    ),
   ],
   abdomen: [
-    [
-      'Prancha abdominal – 3x30s',
-      'Prancha lateral – 3x20s/lado',
-      'Prancha com toque no ombro – 3x20',
-      'Roda abdominal (ab wheel) – 3x12',
-    ],
-    [
-      'Abdominal infra – 3x15',
-      'Abdominal oblíquo – 3x15',
-      'Crunch na polia – 3x15',
-      'Elevação de pernas pendurado – 3x12',
-    ],
+    criarSlot(
+      criarExercicio('prancha-abdominal', 'Prancha abdominal (segundos)', 'abdomen', 'peso corporal', '3x30s'),
+      criarExercicio('prancha-lateral', 'Prancha lateral (segundos por lado)', 'abdomen', 'peso corporal', '3x20s'),
+      criarExercicio('prancha-toque-ombro', 'Prancha com toque no ombro', 'abdomen', 'peso corporal', '3x20'),
+      criarExercicio('roda-abdominal', 'Roda abdominal (ab wheel)', 'abdomen', 'roda abdominal', '3x12'),
+    ),
+    criarSlot(
+      criarExercicio('abdominal-infra', 'Abdominal infra', 'abdomen', 'peso corporal', '3x15'),
+      criarExercicio('abdominal-obliquo', 'Abdominal oblíquo', 'abdomen', 'peso corporal', '3x15'),
+      criarExercicio('crunch-polia', 'Crunch na polia', 'abdomen', 'polia', '3x15'),
+      criarExercicio('elevacao-pernas-pendurado', 'Elevação de pernas pendurado', 'abdomen', 'barra fixa', '3x12'),
+    ),
   ],
   funcional: [
-    [
-      'Face pull – 3x15',
-      'Encolhimento trapézio halteres – 3x15',
-      'Rotação externa ombro – 3x15',
-      'Crucifixo inverso – 3x15',
-    ],
+    criarSlot(
+      criarExercicio('face-pull', 'Face pull', 'funcional', 'cabo', '3x15'),
+      criarExercicio('encolhimento-trapezio-halteres', 'Encolhimento de trapézio com halteres', 'funcional', 'halteres', '3x15'),
+      criarExercicio('rotacao-externa-ombro', 'Rotação externa de ombro', 'funcional', 'cabo', '3x15'),
+      criarExercicio('crucifixo-inverso', 'Crucifixo inverso', 'funcional', 'máquina', '3x15'),
+    ),
   ],
 };
 
 // ─── Estrutura dos treinos da semana ──────────────────────────────────────
 
 export const estruturaSemana = {
-  1: { titulo: '🔥 PUSH — Peito, Ombro e Tríceps', grupos: ['peito', 'ombro', 'triceps'] },
-  2: { titulo: '💪 PULL — Costas e Bíceps', grupos: ['costas', 'biceps', 'funcional'] },
-  3: { titulo: '🦵 LEGS — Pernas e Abdômen', grupos: ['pernas_quad', 'pernas_post', 'abdomen'] },
-  4: { titulo: '🔥 PUSH (Variações)', grupos: ['peito', 'ombro', 'triceps'] },
-  5: { titulo: '💪 PULL (Variações)', grupos: ['costas', 'biceps', 'funcional'] },
-  6: { titulo: '🦵 LEGS + Funcional', grupos: ['pernas_quad', 'pernas_post', 'abdomen'] },
+  1: { id: 'push-a', titulo: '🔥 PUSH A — Peito, Ombro e Tríceps', grupos: ['peito', 'ombro', 'triceps'] },
+  2: { id: 'pull-a', titulo: '💪 PULL A — Costas e Bíceps', grupos: ['costas', 'biceps', 'funcional'] },
+  3: { id: 'legs-a', titulo: '🦵 LEGS A — Pernas e Abdômen', grupos: ['pernas_quad', 'pernas_post', 'abdomen'] },
+  4: { id: 'push-b', titulo: '🔥 PUSH B — Peito, Ombro e Tríceps', grupos: ['peito', 'ombro', 'triceps'] },
+  5: { id: 'pull-b', titulo: '💪 PULL B — Costas e Bíceps', grupos: ['costas', 'biceps', 'funcional'] },
+  6: { id: 'legs-b', titulo: '🦵 LEGS B — Pernas e Abdômen', grupos: ['pernas_quad', 'pernas_post', 'abdomen'] },
 };
 
-// ─── Gerar treino do dia com ROTAÇÃO DIÁRIA ──────────────────────────────
-// Usa o dia do ano como seed — mesmo treino o dia inteiro, diferente amanhã
+// ─── Gerar treino fixo do dia ─────────────────────────────────────────────
 
 export function gerarTreinoDoDia(diaSemana) {
   const estrutura = estruturaSemana[diaSemana] || estruturaSemana[1];
-  const seed = getDiaDoAno();
   const exercicios = [];
 
-  estrutura.grupos.forEach((grupo, gi) => {
+  estrutura.grupos.forEach((grupo) => {
     const slots = exerciciosPorGrupo[grupo];
     if (!slots) return;
-    slots.forEach((variantes, si) => {
-      // Seed combina dia + posição do grupo/slot para distribuição uniforme
-      const idx = (seed + gi * 3 + si * 7) % variantes.length;
-      exercicios.push(variantes[idx]);
+    slots.forEach((slot) => {
+      exercicios.push(slot.principal);
     });
   });
 
-  return { titulo: estrutura.titulo, exercicios };
+  return { id: estrutura.id, titulo: estrutura.titulo, exercicios };
 }
 
 // ─── Periodização / Ciclos ──────────────────────────────────────────────
