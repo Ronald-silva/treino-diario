@@ -4,7 +4,11 @@ function formatarAlvo(exercicio) {
   const repeticoes = exercicio.repsMin === exercicio.repsMax
     ? exercicio.repsMin
     : `${exercicio.repsMin}–${exercicio.repsMax}`;
-  return `${exercicio.series} x ${repeticoes} · RIR ${exercicio.rirAlvo}`;
+  const rirMaximo = exercicio.rirAlvoMax ?? exercicio.rirAlvo;
+  const rir = rirMaximo > exercicio.rirAlvo
+    ? `${exercicio.rirAlvo}–${rirMaximo}`
+    : exercicio.rirAlvo;
+  return `${exercicio.series} x ${repeticoes} · RIR ${rir}`;
 }
 
 function formatarNumero(valor) {
@@ -266,6 +270,89 @@ function ExercicioSessao({
   );
 }
 
+const MOBILIDADE_POR_TREINO = {
+  push: 'Mobilidade de ombros e escápulas.',
+  pull: 'Mobilidade de ombros e coluna torácica.',
+  legs: 'Mobilidade de quadril e tornozelo.',
+};
+
+function AquecimentoTreino({ treino, feito, disabled, onMarcar, onStatus }) {
+  const [oculto, setOculto] = useState(false);
+  const tipo = Object.keys(MOBILIDADE_POR_TREINO).find((item) => treino.id.startsWith(item));
+  const mobilidade = MOBILIDADE_POR_TREINO[tipo] ?? 'Mobilidade do grupo muscular do dia.';
+
+  const marcar = (proximoValor) => {
+    const resultado = onMarcar(proximoValor);
+    if (resultado.ok) {
+      setOculto(false);
+      onStatus(proximoValor ? 'Aquecimento marcado como feito.' : 'Aquecimento desmarcado.');
+    }
+  };
+
+  if (oculto && !feito) {
+    return (
+      <section className="session-warmup session-warmup-collapsed" aria-label="Aquecimento pulado">
+        <p>Aquecimento pulado por agora.</p>
+        <button type="button" className="session-button" onClick={() => setOculto(false)}>
+          Mostrar
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section className={`session-warmup ${feito ? 'is-complete' : ''}`} aria-labelledby="aquecimento-title">
+      <div className="session-warmup-header">
+        <h3 id="aquecimento-title" className="session-warmup-title">Aquecimento (5 min)</h3>
+        {feito ? <span className="session-warmup-state">Feito</span> : null}
+      </div>
+      <ul className="session-warmup-list">
+        <li>
+          <span className="session-warmup-marker" aria-hidden="true">{feito ? '✓' : '○'}</span>
+          <span>3 min de movimento geral: caminhada ou bicicleta leve.</span>
+        </li>
+        <li>
+          <span className="session-warmup-marker" aria-hidden="true">{feito ? '✓' : '○'}</span>
+          <span>{mobilidade}</span>
+        </li>
+        <li>
+          <span className="session-warmup-marker" aria-hidden="true">{feito ? '✓' : '○'}</span>
+          <span>1–2 séries leves do primeiro exercício (carga ~50%, sem registrar como série).</span>
+        </li>
+      </ul>
+      {feito ? (
+        <button
+          type="button"
+          className="session-button"
+          onClick={() => marcar(false)}
+          disabled={disabled}
+        >
+          Desmarcar aquecimento
+        </button>
+      ) : (
+        <div className="session-warmup-actions">
+          <button
+            type="button"
+            className="session-button primary"
+            onClick={() => marcar(true)}
+            disabled={disabled}
+          >
+            Marcar como feito
+          </button>
+          <button
+            type="button"
+            className="session-button"
+            onClick={() => setOculto(true)}
+            disabled={disabled}
+          >
+            Pular agora
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function DialogoReset({ aberto, onFechar, onConfirmar }) {
   const ref = useRef(null);
 
@@ -303,6 +390,7 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
   const [status, setStatus] = useState('');
   const [confirmandoReset, setConfirmandoReset] = useState(false);
   const { sessao, progresso, erro } = controle;
+  const programa = treino.programa;
   const sessaoConcluida = Boolean(sessao.concluidaEm);
   const entradas = new Map(
     sessao.exercicios.map((entrada) => [entrada.exercicioId, entrada]),
@@ -337,6 +425,14 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
           <h2 id="sessao-title" className="text-base font-bold text-white leading-tight">{treino.titulo}</h2>
+          {programa ? (
+            <p className="session-program-line">
+              Semana {programa.semana} · Fase {programa.fase} ({programa.faseNome})
+            </p>
+          ) : null}
+          {programa?.deload ? (
+            <span className="session-deload-label">Semana de deload</span>
+          ) : null}
           <p className="text-xs text-white/60 mt-1">
             {progresso.seriesFeitas}/{progresso.totalSeries} séries prescritas
           </p>
@@ -345,6 +441,12 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
           {progresso.exerciciosFeitos}/{treino.exercicios.length}
         </span>
       </div>
+
+      {programa?.semana <= 8 ? (
+        <p className="session-safety-note">
+          Dor aguda ou que pega na articulação: troque o exercício ou reduza a carga. Dor muscular é normal.
+        </p>
+      ) : null}
 
       <p className="sr-only" aria-live="polite" aria-atomic="true">{status}</p>
 
@@ -360,6 +462,14 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
       {sessaoConcluida ? (
         <div className="session-completed-banner">✓ Treino concluído e salvo neste aparelho</div>
       ) : null}
+
+      <AquecimentoTreino
+        treino={treino}
+        feito={Boolean(sessao.aquecimentoFeito)}
+        disabled={sessaoConcluida}
+        onMarcar={controle.marcarAquecimento}
+        onStatus={setStatus}
+      />
 
       <ol className="session-stack">
         {treino.exercicios.map((exercicio, index) => (

@@ -1,12 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './index.css';
 import './App.css';
+import {
+  ConfigInicial,
+  EditorConfigPrograma,
+} from './components/ConfigPrograma';
 import SessaoTreino from './components/SessaoTreino';
+import { useConfigPrograma } from './hooks/useConfigPrograma';
 import { useDataLocalAtual, useSessao } from './hooks/useSessao';
+import { aplicarFase, calcularSemanaPrograma } from './programa/fases';
 import {
   gerarTreinoDoDia,
   getDiaHebraico,
-  getInfoCiclo,
   gerarPlanoAlimentarDoDia,
   getPalavraAleatoria,
   getPalavraDoDia,
@@ -68,17 +73,23 @@ function SectionTitle({ children }) {
   return <span className="section-title mb-3 mt-1">{children}</span>;
 }
 
-function AppDoDia({ dataAtual }) {
+function AppDoDia({ dataAtual, configPrograma, erroConfig, onConfirmarInicio }) {
   const diaSemana = getDiaSemana(dataAtual);
-  const ciclo = getInfoCiclo();
   const diaHebraico = useMemo(() => getDiaHebraico(), []);
   const isDomingo = diaSemana === 7;
-  const treino = useMemo(
+  const treinoBase = useMemo(
     () => (isDomingo ? null : gerarTreinoDoDia(diaSemana)),
     [diaSemana, isDomingo],
   );
+  const semanaPrograma = useMemo(() => (
+    calcularSemanaPrograma(configPrograma.inicio, dataAtual)
+  ), [configPrograma.inicio, dataAtual]);
+  const treinoProgramado = useMemo(() => (
+    treinoBase ? aplicarFase(treinoBase, semanaPrograma) : null
+  ), [semanaPrograma, treinoBase]);
   const planoAlimentar = useMemo(() => gerarPlanoAlimentarDoDia(), []);
-  const controleSessao = useSessao(dataAtual, treino);
+  const controleSessao = useSessao(dataAtual, treinoBase, treinoProgramado);
+  const treino = controleSessao.treino;
 
   const [dieta, setDieta] = useState(() => loadJSON(`dieta-${dataAtual}`, {}));
   const [palavra, setPalavra] = useState(() => getPalavraDoDia());
@@ -165,18 +176,6 @@ function AppDoDia({ dataAtual }) {
           </div>
         </section>
 
-        <section className="glass-card rounded-2xl p-4 animate-fade-in" aria-label="Ciclo de treino">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Ciclo — Semana {ciclo.semanaNo}/6</span>
-              <div className={`text-sm font-bold mt-0.5 ${ciclo.cor}`}>{ciclo.emoji} {ciclo.fase}</div>
-            </div>
-            <div className={`text-[11px] font-semibold ${ciclo.cor} max-w-[180px] text-right leading-tight`}>
-              {ciclo.msg}
-            </div>
-          </div>
-        </section>
-
         {isDomingo ? (
           <section className="glass-card rounded-2xl p-8 text-center animate-fade-in">
             <div className="text-4xl mb-3" aria-hidden="true">🕊️</div>
@@ -242,7 +241,12 @@ function AppDoDia({ dataAtual }) {
         </section>
 
         <footer className="text-center py-6 text-white/20 text-[10px] uppercase tracking-[3px] font-semibold">
-          Treino Diário &middot; Disciplina Transforma
+          <EditorConfigPrograma
+            inicioAtual={configPrograma.inicio}
+            erro={erroConfig}
+            onConfirmar={onConfirmarInicio}
+          />
+          <div className="mt-3">Treino Diário &middot; Disciplina Transforma</div>
         </footer>
       </main>
     </div>
@@ -251,5 +255,25 @@ function AppDoDia({ dataAtual }) {
 
 export default function App() {
   const dataAtual = useDataLocalAtual();
-  return <AppDoDia key={dataAtual} dataAtual={dataAtual} />;
+  const configPrograma = useConfigPrograma();
+
+  if (!configPrograma.config) {
+    return (
+      <ConfigInicial
+        hoje={dataAtual}
+        erro={configPrograma.erro}
+        onConfirmar={configPrograma.confirmarInicio}
+      />
+    );
+  }
+
+  return (
+    <AppDoDia
+      key={dataAtual}
+      dataAtual={dataAtual}
+      configPrograma={configPrograma.config}
+      erroConfig={configPrograma.erro}
+      onConfirmarInicio={configPrograma.confirmarInicio}
+    />
+  );
 }

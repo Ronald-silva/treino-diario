@@ -35,6 +35,10 @@
   --session-success: #4ade80;
   --session-danger: #f87171;
   --session-focus: #fbbf24;
+  --program-info-surface: rgba(37, 99, 235, 0.12);
+  --program-info-line: rgba(96, 165, 250, 0.25);
+  --program-warning-surface: rgba(217, 119, 6, 0.13);
+  --program-warning-line: rgba(251, 191, 36, 0.28);
   --session-dur-fast: 120ms;
   --session-dur: 220ms;
   --session-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -205,6 +209,207 @@ html, body {
 }
 
 /* ─── Sessão de treino v2 ───────────────────────────────────────────────── */
+
+.program-config-screen {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: var(--session-space-4);
+}
+
+.program-config-card {
+  width: min(100%, 30rem);
+  padding: var(--session-space-5);
+}
+
+.program-config-title {
+  margin: 0;
+  color: var(--session-ink);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.program-config-copy,
+.program-config-help {
+  color: var(--session-ink-muted);
+  line-height: 1.5;
+}
+
+.program-config-copy {
+  margin: var(--session-space-2) 0 var(--session-space-4);
+  font-size: var(--session-text);
+}
+
+.program-config-form {
+  display: grid;
+  gap: var(--session-space-3);
+}
+
+.program-config-label {
+  display: grid;
+  gap: var(--session-space-2);
+  color: var(--session-ink);
+  font-size: var(--session-text);
+  font-weight: 700;
+}
+
+.program-config-input {
+  width: 100%;
+  min-height: var(--session-touch);
+  padding: 0 var(--session-space-3);
+  border: 1px solid var(--session-line);
+  border-radius: var(--session-radius);
+  background: rgba(6, 10, 24, 0.82);
+  color: var(--session-ink);
+  color-scheme: dark;
+  font-size: var(--session-text);
+}
+
+.program-config-help {
+  margin: 0;
+  font-size: var(--session-text-small);
+}
+
+.program-config-error {
+  margin: 0;
+  color: #fecaca;
+  font-size: var(--session-text-small);
+}
+
+.program-config-editor {
+  max-width: 30rem;
+  margin: 0 auto;
+  color: var(--session-ink-muted);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.program-config-editor summary {
+  display: flex;
+  min-height: var(--session-touch);
+  align-items: center;
+  justify-content: center;
+  color: var(--session-ink-soft);
+  cursor: pointer;
+  font-size: var(--session-text-small);
+  font-weight: 700;
+}
+
+.program-config-editor .program-config-form {
+  padding: var(--session-space-3);
+  border: 1px solid var(--session-line);
+  border-radius: var(--session-radius);
+  background: var(--session-surface-strong);
+}
+
+.session-program-line {
+  margin-top: var(--session-space-1);
+  color: var(--session-accent-strong);
+  font-size: var(--session-text);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.session-deload-label {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  margin-top: var(--session-space-2);
+  padding: 0 var(--session-space-2);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--session-success);
+  font-size: var(--session-text-small);
+  font-weight: 800;
+}
+
+.session-safety-note {
+  margin-bottom: var(--session-space-3);
+  padding: var(--session-space-3);
+  border: 1px solid var(--program-warning-line);
+  border-radius: var(--session-radius);
+  background: var(--program-warning-surface);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--session-text-small);
+  line-height: 1.5;
+}
+
+.session-warmup {
+  margin-bottom: var(--session-space-3);
+  padding: var(--session-space-4);
+  border: 1px solid var(--program-info-line);
+  border-radius: var(--session-radius);
+  background: var(--program-info-surface);
+}
+
+.session-warmup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--session-space-2);
+}
+
+.session-warmup-title {
+  margin: 0;
+  color: var(--session-ink);
+  font-size: var(--session-text);
+  font-weight: 800;
+}
+
+.session-warmup-state {
+  color: var(--session-success);
+  font-size: var(--session-text-small);
+  font-weight: 800;
+}
+
+.session-warmup-list {
+  display: grid;
+  gap: var(--session-space-2);
+  margin: var(--session-space-3) 0;
+  padding: 0;
+  color: var(--session-ink-muted);
+  font-size: var(--session-text);
+  line-height: 1.45;
+  list-style: none;
+}
+
+.session-warmup-list li {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: var(--session-space-2);
+}
+
+.session-warmup-marker {
+  color: #93c5fd;
+  font-weight: 900;
+}
+
+.session-warmup.is-complete .session-warmup-marker {
+  color: var(--session-success);
+}
+
+.session-warmup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--session-space-2);
+}
+
+.session-warmup-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--session-space-3);
+}
+
+.session-warmup-collapsed p {
+  margin: 0;
+  color: var(--session-ink-muted);
+  font-size: var(--session-text-small);
+}
 
 .session-stack {
   display: grid;
@@ -533,6 +738,8 @@ html, body {
 }
 
 .session-button:focus-visible,
+.program-config-editor summary:focus-visible,
+.program-config-input:focus-visible,
 .session-summary:focus-visible,
 .session-note-summary:focus-visible,
 .session-stepper input:focus-visible,
@@ -559,6 +766,10 @@ html, body {
   }
 
   .session-footer-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .session-warmup-actions {
     grid-template-columns: 1fr;
   }
 }

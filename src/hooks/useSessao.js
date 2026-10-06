@@ -48,7 +48,13 @@ function sessaoAtingiuPrescricao(sessao, treino) {
 }
 
 function restaurarTreinoDaSessao(treinoBase, treinoProgramado, sessao) {
-  if (!sessao.programa) return treinoBase;
+  if (!treinoBase) return null;
+  if (!sessao.programa) {
+    return {
+      ...treinoBase,
+      programa: treinoProgramado?.programa,
+    };
+  }
 
   const exerciciosPorId = new Map(
     treinoBase.exercicios.map((exercicio) => [exercicio.id, exercicio]),
