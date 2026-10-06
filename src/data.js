@@ -210,14 +210,14 @@ export function gerarTreinoDoDia(diaSemana) {
 
 // ─── Periodização / Ciclos ──────────────────────────────────────────────
 
-export function getSemanaDoAno() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  return Math.ceil((now - start) / (7 * 24 * 60 * 60 * 1000));
+export function getSemanaDoAno(now = new Date()) {
+  const inicioDoAno = Date.UTC(now.getFullYear(), 0, 1);
+  const inicioDoDia = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.floor((inicioDoDia - inicioDoAno) / (7 * 24 * 60 * 60 * 1000)) + 1;
 }
 
-export function getInfoCiclo() {
-  const semanaAtual = getSemanaDoAno();
+export function getInfoCiclo(now = new Date()) {
+  const semanaAtual = getSemanaDoAno(now);
   const semanaNo = ((semanaAtual - 1) % 6) + 1;
   if (semanaNo <= 2) return { fase: 'Adaptação', msg: 'Semana leve — foque na técnica e no movimento', cor: 'text-blue-400', emoji: '🧊', semanaNo };
   if (semanaNo <= 5) return { fase: 'Progressão', msg: 'Semana de progressão — aumente a carga! 🔥', cor: 'text-amber-400', emoji: '⚡', semanaNo };

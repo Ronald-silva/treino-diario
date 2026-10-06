@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { parsePrescricao } from '../data';
+import { getInfoCiclo, getSemanaDoAno, parsePrescricao } from '../data';
 import {
   CHAVE_HISTORICO,
   VERSAO_SESSAO,
@@ -162,5 +162,12 @@ describe('sessão de treino v2', () => {
     ['3x12', { series: 3, repsMin: 12, repsMax: 12 }],
   ])('parseia %s corretamente', (prescricao, esperado) => {
     expect(parsePrescricao(prescricao)).toEqual(esperado);
+  });
+
+  it('inicia o ciclo na semana 1 em primeiro de janeiro', () => {
+    const primeiroDeJaneiro = new Date(2027, 0, 1, 12, 0, 0);
+
+    expect(getSemanaDoAno(primeiroDeJaneiro)).toBe(1);
+    expect(getInfoCiclo(primeiroDeJaneiro).semanaNo).toBe(1);
   });
 });
