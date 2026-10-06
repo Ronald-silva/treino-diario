@@ -127,7 +127,7 @@ function normalizarSerie(serie, serieAtual = null) {
   const reps = Number(serie.reps);
   const rir = serie.rir === null || serie.rir === '' ? null : Number(serie.rir);
 
-  if (!numeroValido(kg) || !numeroValido(reps) || (rir !== null && !numeroValido(rir))) {
+  if (!numeroValido(kg) || !numeroValido(reps) || reps < 1 || (rir !== null && !numeroValido(rir))) {
     return null;
   }
 
@@ -247,5 +247,16 @@ export function reabrirSessao(sessao) {
 }
 
 export function resetarSessao({ data, treinoId, exercicioIds }) {
-  return salvarSessao(criarSessaoVazia({ data, treinoId, exercicioIds }));
+  const vazia = criarSessaoVazia({ data, treinoId, exercicioIds });
+  const salvamento = salvarSessao(vazia);
+  if (!salvamento.ok) return salvamento;
+
+  const historico = carregarHistorico().filter((dataHistorico) => dataHistorico !== data);
+  const resultadoHistorico = salvarHistorico(historico);
+
+  return resultado(
+    vazia,
+    resultadoHistorico.ok,
+    resultadoHistorico.erro,
+  );
 }

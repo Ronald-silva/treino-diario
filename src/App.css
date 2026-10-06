@@ -12,6 +12,34 @@
   ═══════════════════════════════════════════════════════════════
 */
 
+:root {
+  --session-space-1: 0.25rem;
+  --session-space-2: 0.5rem;
+  --session-space-3: 0.75rem;
+  --session-space-4: 1rem;
+  --session-space-5: 1.5rem;
+  --session-touch: 2.75rem;
+  --session-marker: 2rem;
+  --session-radius: 0.75rem;
+  --session-text: 0.875rem;
+  --session-text-small: 0.75rem;
+  --session-number: 1rem;
+  --session-ink: rgba(255, 255, 255, 0.92);
+  --session-ink-muted: rgba(255, 255, 255, 0.68);
+  --session-ink-soft: rgba(255, 255, 255, 0.48);
+  --session-surface: rgba(20, 28, 55, 0.62);
+  --session-surface-strong: rgba(14, 20, 40, 0.82);
+  --session-line: rgba(212, 162, 83, 0.18);
+  --session-accent: #d4a253;
+  --session-accent-strong: #fbbf24;
+  --session-success: #4ade80;
+  --session-danger: #f87171;
+  --session-focus: #fbbf24;
+  --session-dur-fast: 120ms;
+  --session-dur: 220ms;
+  --session-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -22,7 +50,7 @@ html, body {
 
 #root {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
 }
@@ -143,47 +171,6 @@ html, body {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* ─── Botões de carga (psicologia: verde=progresso, azul=estável, vermelho=alerta) */
-
-.load-btn {
-  transition: all 0.2s ease;
-  cursor: pointer;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  border: 1px solid rgba(212, 162, 83, 0.10);
-  background: rgba(14, 20, 40, 0.5);
-  color: rgba(245, 240, 230, 0.40);
-}
-
-.load-btn:hover {
-  background: rgba(212, 162, 83, 0.08);
-  color: rgba(245, 240, 230, 0.70);
-}
-
-/* Verde floresta = crescimento muscular */
-.load-btn.active-up {
-  background: rgba(22, 163, 74, 0.18);
-  border-color: rgba(22, 163, 74, 0.50);
-  color: #4ADE80;
-  box-shadow: 0 0 6px rgba(22, 163, 74, 0.15);
-}
-
-/* Azul profundo = estabilidade, manutenção */
-.load-btn.active-same {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.45);
-  color: #60A5FA;
-}
-
-/* Carmesim = atenção, alerta de redução */
-.load-btn.active-down {
-  background: rgba(185, 28, 28, 0.18);
-  border-color: rgba(185, 28, 28, 0.50);
-  color: #F87171;
-}
-
 /* ─── Scrollbar ────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar { width: 4px; }
@@ -215,4 +202,374 @@ html, body {
 .hebrew-text {
   font-family: 'Segoe UI', 'Noto Sans Hebrew', sans-serif;
   letter-spacing: 2px;
+}
+
+/* ─── Sessão de treino v2 ───────────────────────────────────────────────── */
+
+.session-stack {
+  display: grid;
+  gap: var(--session-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session-exercise {
+  padding: var(--session-space-4);
+  border: 1px solid var(--session-line);
+  border-radius: var(--session-radius);
+  background: var(--session-surface);
+  transition:
+    border-color var(--session-dur) var(--session-ease),
+    background var(--session-dur) var(--session-ease);
+}
+
+.session-exercise.is-complete {
+  border-color: rgba(74, 222, 128, 0.32);
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.session-heading-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--session-space-3);
+}
+
+.session-marker {
+  display: grid;
+  width: var(--session-marker);
+  height: var(--session-marker);
+  flex: 0 0 var(--session-marker);
+  place-items: center;
+  border: 1px solid var(--session-line);
+  border-radius: var(--session-radius);
+  color: var(--session-accent-strong);
+  font-size: var(--session-text-small);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.session-exercise.is-complete .session-marker {
+  border-color: rgba(74, 222, 128, 0.4);
+  color: var(--session-success);
+}
+
+.session-heading-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.session-exercise-title {
+  color: var(--session-ink);
+  font-size: var(--session-text);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.session-target {
+  margin-top: var(--session-space-1);
+  color: var(--session-ink-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--session-text-small);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.session-complete-label {
+  display: block;
+  margin-top: var(--session-space-1);
+  color: var(--session-success);
+  font-size: var(--session-text-small);
+  font-weight: 700;
+}
+
+.session-series-list {
+  display: grid;
+  gap: var(--session-space-2);
+  margin: var(--session-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session-series-row {
+  padding: var(--session-space-3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--session-radius);
+  background: var(--session-surface-strong);
+}
+
+.session-series-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--session-space-2);
+  flex-wrap: wrap;
+}
+
+.session-series-values {
+  display: flex;
+  align-items: baseline;
+  gap: var(--session-space-2);
+  flex-wrap: wrap;
+  color: var(--session-ink);
+  font-size: var(--session-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.session-series-number {
+  color: var(--session-accent-strong);
+  font-size: var(--session-text-small);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.session-series-note {
+  margin-top: var(--session-space-2);
+  color: var(--session-ink-muted);
+  font-size: var(--session-text-small);
+  line-height: 1.45;
+}
+
+.session-series-actions {
+  display: flex;
+  gap: var(--session-space-2);
+  margin-left: auto;
+}
+
+.session-button,
+.session-summary,
+.session-note-summary {
+  min-height: var(--session-touch);
+  border-radius: var(--session-radius);
+  font-size: var(--session-text-small);
+  font-weight: 700;
+  transition:
+    background var(--session-dur-fast) var(--session-ease),
+    color var(--session-dur-fast) var(--session-ease),
+    transform var(--session-dur-fast) var(--session-ease);
+}
+
+.session-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--session-space-3);
+  border: 1px solid var(--session-line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--session-ink-muted);
+  cursor: pointer;
+}
+
+.session-button:hover {
+  background: rgba(212, 162, 83, 0.1);
+  color: var(--session-ink);
+}
+
+.session-button:active {
+  transform: scale(0.97);
+}
+
+.session-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.session-button.primary {
+  border-color: transparent;
+  background: linear-gradient(90deg, #eab308, #d97706);
+  color: #080c1e;
+}
+
+.session-button.danger {
+  border-color: rgba(248, 113, 113, 0.28);
+  color: var(--session-danger);
+}
+
+.session-disclosure {
+  margin-top: var(--session-space-3);
+  border-top: 1px solid var(--session-line);
+}
+
+.session-summary,
+.session-note-summary {
+  display: flex;
+  align-items: center;
+  color: var(--session-accent-strong);
+  cursor: pointer;
+}
+
+.session-summary {
+  justify-content: space-between;
+  padding-top: var(--session-space-2);
+  font-size: var(--session-text);
+}
+
+.session-note-summary {
+  color: var(--session-ink-muted);
+}
+
+.session-form {
+  display: grid;
+  gap: var(--session-space-3);
+  padding-top: var(--session-space-2);
+}
+
+.session-stepper-list {
+  display: grid;
+  gap: var(--session-space-2);
+}
+
+.session-stepper {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 0.8fr) var(--session-touch) minmax(3.75rem, 1fr) var(--session-touch);
+  align-items: center;
+  gap: var(--session-space-1);
+}
+
+.session-stepper label {
+  color: var(--session-ink-muted);
+  font-size: var(--session-text-small);
+  font-weight: 700;
+}
+
+.session-stepper button {
+  width: var(--session-touch);
+  min-width: var(--session-touch);
+  min-height: var(--session-touch);
+  border: 1px solid var(--session-line);
+  border-radius: var(--session-radius);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--session-accent-strong);
+  font-size: var(--session-number);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.session-stepper input,
+.session-note-input {
+  width: 100%;
+  border: 1px solid var(--session-line);
+  border-radius: var(--session-radius);
+  background: rgba(6, 10, 24, 0.72);
+  color: var(--session-ink);
+  font-size: var(--session-number);
+}
+
+.session-stepper input {
+  min-width: 0;
+  min-height: var(--session-touch);
+  padding: 0 var(--session-space-2);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-note-input {
+  min-height: calc(var(--session-touch) * 1.5);
+  margin-top: var(--session-space-2);
+  padding: var(--session-space-3);
+  resize: vertical;
+}
+
+.session-form-actions,
+.session-footer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--session-space-2);
+}
+
+.session-form-actions .session-button:only-child {
+  grid-column: 1 / -1;
+}
+
+.session-save-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--session-space-3);
+  margin-bottom: var(--session-space-3);
+  padding: var(--session-space-3);
+  border: 1px solid rgba(248, 113, 113, 0.38);
+  border-radius: var(--session-radius);
+  background: rgba(185, 28, 28, 0.18);
+  color: #fecaca;
+  font-size: var(--session-text);
+}
+
+.session-completed-banner {
+  margin-bottom: var(--session-space-3);
+  padding: var(--session-space-3);
+  border: 1px solid rgba(74, 222, 128, 0.34);
+  border-radius: var(--session-radius);
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--session-success);
+  font-size: var(--session-text);
+  font-weight: 700;
+  text-align: center;
+}
+
+.session-reset-dialog {
+  width: min(24rem, calc(100% - (var(--session-space-4) * 2)));
+  padding: var(--session-space-5);
+  border: 1px solid var(--session-line);
+  border-radius: var(--session-radius);
+  background: #0e1428;
+  color: var(--session-ink);
+}
+
+.session-reset-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.session-reset-dialog h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.session-reset-dialog p {
+  margin: var(--session-space-2) 0 var(--session-space-4);
+  color: var(--session-ink-muted);
+  font-size: var(--session-text);
+  line-height: 1.5;
+}
+
+.session-button:focus-visible,
+.session-summary:focus-visible,
+.session-note-summary:focus-visible,
+.session-stepper input:focus-visible,
+.session-stepper button:focus-visible,
+.session-note-input:focus-visible {
+  outline: 2px solid var(--session-focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .session-stepper {
+    grid-template-columns: minmax(4rem, 0.8fr) var(--session-touch) minmax(3rem, 1fr) var(--session-touch);
+  }
+
+  .session-footer-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

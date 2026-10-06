@@ -10,6 +10,7 @@ import {
   getChaveSessao,
   getDataLocal,
   registrarSerie,
+  resetarSessao,
 } from './sessao';
 
 class LocalStorageEmMemoria {
@@ -81,6 +82,23 @@ describe('sessão de treino v2', () => {
     expect(JSON.parse(localStorage.getItem(CHAVE_HISTORICO))).toEqual([TREINO_A.data]);
   });
 
+  it('retorna aviso sem lançar quando a gravação falha', () => {
+    const sessao = carregarSessaoDoTreino(TREINO_A);
+    localStorage.setItem = () => {
+      throw new Error('storage indisponível');
+    };
+
+    const resultado = registrarSerie(sessao, 'puxada-frente-polia-alta', {
+      kg: 50,
+      reps: 10,
+      rir: 2,
+      nota: '',
+    });
+
+    expect(resultado.ok).toBe(false);
+    expect(resultado.erro).toBe('Não foi possível salvar.');
+  });
+
   it('usa fallback seguro quando o JSON está corrompido', () => {
     localStorage.setItem(getChaveSessao(TREINO_A.data), '{json-invalido');
 
@@ -126,6 +144,17 @@ describe('sessão de treino v2', () => {
     expect(sessaoDoNovoDia.exercicios).toEqual([
       { exercicioId: 'agachamento-livre', series: [] },
     ]);
+  });
+
+  it('remove do histórico somente a sessão resetada', () => {
+    const sessao = carregarSessaoDoTreino(TREINO_A);
+    concluirSessao(sessao);
+
+    const resultado = resetarSessao(TREINO_A);
+
+    expect(resultado.ok).toBe(true);
+    expect(resultado.sessao.exercicios[0].series).toEqual([]);
+    expect(carregarHistorico()).toEqual([]);
   });
 
   it.each([
