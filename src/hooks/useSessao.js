@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   carregarSessaoDoTreino,
   concluirSessao,
+  definirAquecimento,
   editarSerie,
   getDataLocal,
   reabrirSessao,
@@ -46,15 +47,46 @@ function sessaoAtingiuPrescricao(sessao, treino) {
   });
 }
 
-export function useSessao(data, treino) {
+function restaurarTreinoDaSessao(treinoBase, treinoProgramado, sessao) {
+  if (!sessao.programa) return treinoBase;
+
+  const exerciciosPorId = new Map(
+    treinoBase.exercicios.map((exercicio) => [exercicio.id, exercicio]),
+  );
+  const exercicios = sessao.exercicios.flatMap((entrada) => {
+    const exercicioBase = exerciciosPorId.get(entrada.exercicioId);
+    if (!exercicioBase) return [];
+
+    return [{
+      ...exercicioBase,
+      series: entrada.prescricao?.series ?? exercicioBase.series,
+      rirAlvo: entrada.prescricao?.rirAlvo ?? exercicioBase.rirAlvo,
+      rirAlvoMax: entrada.prescricao?.rirAlvoMax
+        ?? entrada.prescricao?.rirAlvo
+        ?? exercicioBase.rirAlvo,
+    }];
+  });
+
+  return {
+    ...treinoProgramado,
+    programa: sessao.programa,
+    exercicios,
+  };
+}
+
+export function useSessao(data, treinoBase, treinoProgramado = treinoBase) {
   const configuracao = useMemo(() => ({
     data,
-    treinoId: treino?.id ?? 'descanso',
-    exercicioIds: treino?.exercicios.map((exercicio) => exercicio.id) ?? [],
-  }), [data, treino]);
+    treinoId: treinoProgramado?.id ?? 'descanso',
+    exercicios: treinoProgramado?.exercicios ?? [],
+    programa: treinoProgramado?.programa,
+  }), [data, treinoProgramado]);
 
   const [sessao, setSessao] = useState(() => carregarSessaoDoTreino(configuracao));
   const [erro, setErro] = useState(null);
+  const treino = useMemo(() => (
+    restaurarTreinoDaSessao(treinoBase, treinoProgramado, sessao)
+  ), [sessao, treinoBase, treinoProgramado]);
 
   const aplicarResultado = useCallback((resultado) => {
     setSessao(resultado.sessao);
@@ -88,6 +120,10 @@ export function useSessao(data, treino) {
     aplicarResultado(removerSerie(sessao, exercicioId, serieIndex))
   ), [aplicarResultado, sessao]);
 
+  const marcarAquecimento = useCallback((feito) => (
+    aplicarResultado(definirAquecimento(sessao, feito))
+  ), [aplicarResultado, sessao]);
+
   const concluir = useCallback(() => {
     const jaEstavaConcluida = Boolean(sessao.concluidaEm);
     const resultado = aplicarResultado(concluirSessao(sessao));
@@ -102,8 +138,13 @@ export function useSessao(data, treino) {
   ), [aplicarResultado, sessao]);
 
   const resetar = useCallback(() => (
-    aplicarResultado(resetarSessao(configuracao))
-  ), [aplicarResultado, configuracao]);
+    aplicarResultado(resetarSessao({
+      data,
+      treinoId: treino?.id ?? 'descanso',
+      exercicios: treino?.exercicios ?? [],
+      programa: treino?.programa,
+    }))
+  ), [aplicarResultado, data, treino]);
 
   const progresso = useMemo(() => {
     if (!treino) {
@@ -134,11 +175,13 @@ export function useSessao(data, treino) {
 
   return {
     sessao,
+    treino,
     erro,
     progresso,
     registrar,
     editar,
     remover,
+    marcarAquecimento,
     concluir,
     reabrir,
     resetar,

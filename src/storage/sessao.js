@@ -33,19 +33,41 @@ export function getChaveSessao(data) {
   return `${PREFIXO_SESSAO}${data}`;
 }
 
-function criarEntradaExercicio(exercicioId) {
-  return { exercicioId, series: [] };
+function criarEntradaExercicio(exercicio) {
+  const exercicioId = typeof exercicio === 'string' ? exercicio : exercicio.id;
+  const entrada = { exercicioId, series: [] };
+
+  if (typeof exercicio === 'object' && exercicio !== null) {
+    entrada.prescricao = {
+      series: exercicio.series,
+      rirAlvo: exercicio.rirAlvo,
+      rirAlvoMax: exercicio.rirAlvoMax ?? exercicio.rirAlvo,
+    };
+  }
+
+  return entrada;
 }
 
-export function criarSessaoVazia({ data, treinoId = null, exercicioIds = [], agora = new Date() }) {
-  return {
+export function criarSessaoVazia({
+  data,
+  treinoId = null,
+  exercicioIds = [],
+  exercicios,
+  programa,
+  agora = new Date(),
+}) {
+  const sessao = {
     v: VERSAO_SESSAO,
     data,
     treinoId,
     iniciadaEm: getDataHoraLocal(agora),
     concluidaEm: null,
-    exercicios: exercicioIds.map(criarEntradaExercicio),
+    aquecimentoFeito: false,
+    exercicios: (exercicios ?? exercicioIds).map(criarEntradaExercicio),
   };
+
+  if (programa) sessao.programa = { ...programa };
+  return sessao;
 }
 
 function numeroValido(valor) {
@@ -61,6 +83,24 @@ function serieValida(serie) {
     && typeof serie.feitaEm === 'string';
 }
 
+function prescricaoValida(prescricao) {
+  return prescricao
+    && Number.isInteger(prescricao.series)
+    && prescricao.series >= 1
+    && numeroValido(prescricao.rirAlvo)
+    && (prescricao.rirAlvoMax === undefined || numeroValido(prescricao.rirAlvoMax));
+}
+
+function programaValido(programa) {
+  return programa
+    && Number.isInteger(programa.fase)
+    && programa.fase >= 1
+    && (programa.faseNome === undefined || typeof programa.faseNome === 'string')
+    && Number.isInteger(programa.semana)
+    && programa.semana >= 1
+    && typeof programa.deload === 'boolean';
+}
+
 function sessaoValida(sessao, dataEsperada) {
   return sessao
     && sessao.v === VERSAO_SESSAO
@@ -68,10 +108,13 @@ function sessaoValida(sessao, dataEsperada) {
     && (typeof sessao.treinoId === 'string' || sessao.treinoId === null)
     && typeof sessao.iniciadaEm === 'string'
     && (typeof sessao.concluidaEm === 'string' || sessao.concluidaEm === null)
+    && (sessao.aquecimentoFeito === undefined || typeof sessao.aquecimentoFeito === 'boolean')
+    && (sessao.programa === undefined || programaValido(sessao.programa))
     && Array.isArray(sessao.exercicios)
     && sessao.exercicios.every((entrada) => (
       entrada
       && typeof entrada.exercicioId === 'string'
+      && (entrada.prescricao === undefined || prescricaoValida(entrada.prescricao))
       && Array.isArray(entrada.series)
       && entrada.series.every(serieValida)
     ));
@@ -89,12 +132,29 @@ export function carregarSessao(data) {
   }
 }
 
-export function carregarSessaoDoTreino({ data, treinoId, exercicioIds, agora = new Date() }) {
+export function carregarSessaoDoTreino({
+  data,
+  treinoId,
+  exercicioIds = [],
+  exercicios,
+  programa,
+  agora = new Date(),
+}) {
   const carregada = carregarSessao(data);
+  const listaExercicios = exercicios ?? exercicioIds;
 
-  if (carregada.treinoId !== null && carregada.treinoId !== treinoId) {
-    return criarSessaoVazia({ data, treinoId, exercicioIds, agora });
+  if (carregada.treinoId === null || carregada.treinoId !== treinoId) {
+    return criarSessaoVazia({
+      data,
+      treinoId,
+      exercicioIds,
+      exercicios,
+      programa,
+      agora,
+    });
   }
+
+  if (carregada.programa) return carregada;
 
   const entradasPorId = new Map(
     carregada.exercicios.map((entrada) => [entrada.exercicioId, entrada]),
@@ -103,9 +163,12 @@ export function carregarSessaoDoTreino({ data, treinoId, exercicioIds, agora = n
   return {
     ...carregada,
     treinoId,
-    exercicios: exercicioIds.map((exercicioId) => (
-      entradasPorId.get(exercicioId) ?? criarEntradaExercicio(exercicioId)
-    )),
+    exercicios: listaExercicios.map((exercicio) => {
+      const exercicioId = typeof exercicio === 'string' ? exercicio : exercicio.id;
+      return (
+        entradasPorId.get(exercicioId) ?? criarEntradaExercicio(exercicio)
+      );
+    }),
   };
 }
 
@@ -191,6 +254,11 @@ export function removerSerie(sessao, exercicioId, serieIndex) {
   return salvarSessao(atualizada);
 }
 
+export function definirAquecimento(sessao, feito) {
+  const atualizada = { ...sessao, aquecimentoFeito: Boolean(feito) };
+  return salvarSessao(atualizada);
+}
+
 export function carregarHistorico() {
   try {
     const valor = localStorage.getItem(CHAVE_HISTORICO);
@@ -246,8 +314,20 @@ export function reabrirSessao(sessao) {
   );
 }
 
-export function resetarSessao({ data, treinoId, exercicioIds }) {
-  const vazia = criarSessaoVazia({ data, treinoId, exercicioIds });
+export function resetarSessao({
+  data,
+  treinoId,
+  exercicioIds = [],
+  exercicios,
+  programa,
+}) {
+  const vazia = criarSessaoVazia({
+    data,
+    treinoId,
+    exercicioIds,
+    exercicios,
+    programa,
+  });
   const salvamento = salvarSessao(vazia);
   if (!salvamento.ok) return salvamento;
 

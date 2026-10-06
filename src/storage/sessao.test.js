@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getInfoCiclo, getSemanaDoAno, parsePrescricao } from '../data';
+import {
+  gerarTreinoDoDia,
+  getInfoCiclo,
+  getSemanaDoAno,
+  parsePrescricao,
+} from '../data';
+import { aplicarFase, calcularSemanaPrograma } from '../programa/fases';
+import { salvarConfigPrograma } from './configPrograma';
 import {
   CHAVE_HISTORICO,
   VERSAO_SESSAO,
@@ -155,6 +162,58 @@ describe('sessão de treino v2', () => {
     expect(resultado.ok).toBe(true);
     expect(resultado.sessao.exercicios[0].series).toEqual([]);
     expect(carregarHistorico()).toEqual([]);
+  });
+
+  it('mantém o snapshot da semana 1 depois de alterar a data de início', () => {
+    salvarConfigPrograma('2026-10-06');
+    const treinoBase = gerarTreinoDoDia(1);
+    const semanaInicial = calcularSemanaPrograma('2026-10-06', TREINO_A.data);
+    const treinoInicial = aplicarFase(treinoBase, semanaInicial);
+    const sessaoInicial = carregarSessaoDoTreino({
+      data: TREINO_A.data,
+      treinoId: treinoInicial.id,
+      exercicios: treinoInicial.exercicios,
+      programa: treinoInicial.programa,
+    });
+
+    registrarSerie(sessaoInicial, treinoInicial.exercicios[0].id, {
+      kg: 20,
+      reps: 10,
+      rir: 3,
+      nota: '',
+    });
+
+    salvarConfigPrograma('2026-09-01');
+    const novaSemana = calcularSemanaPrograma('2026-09-01', TREINO_A.data);
+    const treinoRecalculado = aplicarFase(treinoBase, novaSemana);
+    const recarregada = carregarSessaoDoTreino({
+      data: TREINO_A.data,
+      treinoId: treinoRecalculado.id,
+      exercicios: treinoRecalculado.exercicios,
+      programa: treinoRecalculado.programa,
+    });
+
+    expect(treinoRecalculado.programa.semana).toBeGreaterThan(1);
+    expect(recarregada.programa).toMatchObject({ fase: 1, semana: 1, deload: false });
+    expect(recarregada.exercicios).toHaveLength(4);
+    recarregada.exercicios.forEach((entrada) => {
+      expect(entrada.prescricao).toMatchObject({ series: 2, rirAlvo: 3 });
+    });
+  });
+
+  it('carrega uma sessão v2 antiga sem snapshot', () => {
+    const antiga = {
+      v: 2,
+      data: TREINO_A.data,
+      treinoId: TREINO_A.treinoId,
+      iniciadaEm: '2026-10-06T07:00:00.000-03:00',
+      concluidaEm: null,
+      exercicios: [{ exercicioId: 'puxada-frente-polia-alta', series: [] }],
+    };
+    localStorage.setItem(getChaveSessao(TREINO_A.data), JSON.stringify(antiga));
+
+    expect(() => carregarSessao(TREINO_A.data)).not.toThrow();
+    expect(carregarSessao(TREINO_A.data)).toEqual(antiga);
   });
 
   it.each([
