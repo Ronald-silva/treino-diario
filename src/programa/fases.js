@@ -11,6 +11,7 @@ export const CONFIGURACAO_FASES = Object.freeze({
   RIR_COMPOSTO_PROGRESSAO_MAX: 2,
   RIR_ISOLADOR_PROGRESSAO: 2,
   RIR_DELOAD: 4,
+  SERIES_AGACHAMENTO_FASE3_SEMANA_9_14: 3,
   LIMITES_ADAPTACAO: Object.freeze({
     push: 4,
     pull: 5,
@@ -33,6 +34,7 @@ export const IDS_EXERCICIOS_COMPOSTOS = Object.freeze([
   'remada-unilateral-halter',
   'agachamento-livre',
   'leg-press-45',
+  'stiff-halteres',
 ]);
 
 const EXERCICIOS_COMPOSTOS = new Set(IDS_EXERCICIOS_COMPOSTOS);
@@ -153,8 +155,19 @@ function aplicarAlvo(exercicio, programa) {
     ? CONFIGURACAO_FASES.RIR_COMPOSTO_PROGRESSAO_MIN
     : CONFIGURACAO_FASES.RIR_ISOLADOR_PROGRESSAO;
 
+  // Fase 3: agachamento livre usa 3 séries nas semanas 9 a 14
+  let series = exercicio.series;
+  if (
+    exercicio.id === 'agachamento-livre' &&
+    programa.semana >= 9 &&
+    programa.semana <= 14
+  ) {
+    series = CONFIGURACAO_FASES.SERIES_AGACHAMENTO_FASE3_SEMANA_9_14;
+  }
+
   return {
     ...exercicio,
+    series,
     rirAlvo,
     rirAlvoMax: composto
       ? CONFIGURACAO_FASES.RIR_COMPOSTO_PROGRESSAO_MAX

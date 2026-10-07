@@ -7,9 +7,13 @@ export function getDiaDoAno() {
   return Math.floor((now - start) / (1000 * 60 * 60 * 24));
 }
 
-const REGEX_PRESCRICAO = /(\d+)\s*x\s*(\d+)(?:\s*[–-]\s*(\d+))?/i;
+const REGEX_PRESCRICAO = /(\d+)\s*x\s*(\d+)(?:\s*[–-]\s*(\d+))?\s*(s|seg|min)?\b/i;
 
-/** Converte prescrições como 4x10 e 3x8-12 para dados numéricos. */
+/** Converte prescrições como 4x10, 3x8-12, 3x30s para dados numéricos.
+ *  Campos numéricos (series, repsMin, repsMax) são sempre mantidos para
+ *  compatibilidade com o schema. `unidade` opcional indica que o alvo
+ *  é temporal em vez de repetições.
+ */
 export function parsePrescricao(prescricao) {
   const match = REGEX_PRESCRICAO.exec(prescricao);
 
@@ -20,8 +24,30 @@ export function parsePrescricao(prescricao) {
   const series = Number(match[1]);
   const repsMin = Number(match[2]);
   const repsMax = Number(match[3] ?? match[2]);
+  const sufixo = (match[4] || '').toLowerCase();
 
-  return { series, repsMin, repsMax };
+  let unidade;
+  if (sufixo === 's' || sufixo === 'seg') unidade = 'segundos';
+  else if (sufixo === 'min') unidade = 'minutos';
+
+  return unidade ? { series, repsMin, repsMax, unidade } : { series, repsMin, repsMax };
+}
+
+/**
+ * Busca um exercício por ID em todos os grupos/slots, retornando o exercício
+ * (o principal da alternativa, se o ID corresponde a uma alternativa).
+ * Retorna undefined se não for encontrado.
+ */
+export function buscarExercicioPorId(id) {
+  for (const grupo of Object.values(exerciciosPorGrupo)) {
+    for (const slot of grupo) {
+      if (slot.principal.id === id) return slot.principal;
+      for (const alt of slot.alternativas) {
+        if (alt.id === id) return alt;
+      }
+    }
+  }
+  return undefined;
 }
 
 function criarExercicio(id, nome, grupo, equipamento, prescricao, rirAlvo = 2) {
@@ -147,7 +173,7 @@ export const exerciciosPorGrupo = {
       criarExercicio('mesa-flexora', 'Mesa flexora', 'pernas_post', 'máquina', '3x12'),
       criarExercicio('cadeira-flexora', 'Cadeira flexora', 'pernas_post', 'máquina', '3x12'),
       criarExercicio('stiff-barra', 'Stiff com barra', 'pernas_post', 'barra', '3x10'),
-      criarExercicio('stiff-halteres', 'Stiff com halteres', 'pernas_post', 'halteres', '3x12'),
+      criarExercicio('stiff-halteres', 'Stiff com halteres', 'pernas_post', 'halteres', '3x10'),
     ),
     criarSlot(
       criarExercicio('panturrilha-em-pe', 'Elevação de panturrilhas em pé', 'pernas_post', 'máquina', '3x15'),
@@ -181,29 +207,86 @@ export const exerciciosPorGrupo = {
 };
 
 // ─── Estrutura dos treinos da semana ──────────────────────────────────────
+//
+// Cada dia pode ter:
+//   • grupos (legado): todos os slots daquele grupo são concatenados.
+//   • slotsCustomizados: ordem explícita com formato [grupo, slotIndex,
+//     alternativaIndex?]. Quando presente, tem prioridade e substitui a
+//     expansão padrão por `grupos`. Permite rotinas A e B diferentes sem
+//     duplicar exercícios, usando os mesmos IDs do banco.
 
 export const estruturaSemana = {
-  1: { id: 'push-a', titulo: '🔥 PUSH A — Peito, Ombro e Tríceps', grupos: ['peito', 'ombro', 'triceps'] },
-  2: { id: 'pull-a', titulo: '💪 PULL A — Costas e Bíceps', grupos: ['costas', 'biceps', 'funcional'] },
-  3: { id: 'legs-a', titulo: '🦵 LEGS A — Pernas e Abdômen', grupos: ['pernas_quad', 'pernas_post', 'abdomen'] },
-  4: { id: 'push-b', titulo: '🔥 PUSH B — Peito, Ombro e Tríceps', grupos: ['peito', 'ombro', 'triceps'] },
-  5: { id: 'pull-b', titulo: '💪 PULL B — Costas e Bíceps', grupos: ['costas', 'biceps', 'funcional'] },
-  6: { id: 'legs-b', titulo: '🦵 LEGS B — Pernas e Abdômen', grupos: ['pernas_quad', 'pernas_post', 'abdomen'] },
+  1: {
+    id: 'push-a',
+    titulo: '🔥 PUSH A — Peito, Ombro e Tríceps',
+    grupos: ['peito', 'ombro', 'triceps'],
+  },
+  2: {
+    id: 'pull-a',
+    titulo: '💪 PULL A — Costas e Bíceps',
+    grupos: ['costas', 'biceps', 'funcional'],
+  },
+  3: {
+    id: 'legs-a',
+    titulo: '🦵 LEGS A — Pernas e Abdômen',
+    slotsCustomizados: [
+      ['pernas_quad', 0],    // Agachamento livre
+      ['pernas_quad', 1],    // Leg press 45°
+      ['pernas_post', 0, 2], // Stiff com halteres — alternativa 2 do slot 0 pernas_post
+      ['pernas_post', 0],    // Mesa flexora — principal slot 0 pernas_post
+      ['pernas_post', 1],    // Panturrilha
+      ['abdomen', 0],        // Prancha abdominal
+      ['abdomen', 1],        // Abdominal infra
+    ],
+  },
+  4: {
+    id: 'push-b',
+    titulo: '🔥 PUSH B — Peito, Ombro e Tríceps',
+    grupos: ['peito', 'ombro', 'triceps'],
+  },
+  5: {
+    id: 'pull-b',
+    titulo: '💪 PULL B — Costas e Bíceps',
+    grupos: ['costas', 'biceps', 'funcional'],
+  },
+  6: {
+    id: 'legs-b',
+    titulo: '🦵 LEGS B — Pernas e Abdômen',
+    grupos: ['pernas_quad', 'pernas_post', 'abdomen'],
+  },
 };
 
-// ─── Gerar treino fixo do dia ─────────────────────────────────────────────
+function expandirSlotsCustomizados(slotsCustomizados) {
+  const resultado = [];
+  for (const [grupo, slotIdx, altIdx] of slotsCustomizados) {
+    const slots = exerciciosPorGrupo[grupo];
+    const slot = slots?.[slotIdx];
+    if (!slot) continue;
+    const exercicio = typeof altIdx === 'number' ? slot.alternativas[altIdx] : slot.principal;
+    if (exercicio) resultado.push(exercicio);
+  }
+  return resultado;
+}
 
-export function gerarTreinoDoDia(diaSemana) {
-  const estrutura = estruturaSemana[diaSemana] || estruturaSemana[1];
+function expandirGrupos(grupos) {
   const exercicios = [];
-
-  estrutura.grupos.forEach((grupo) => {
+  grupos.forEach((grupo) => {
     const slots = exerciciosPorGrupo[grupo];
     if (!slots) return;
     slots.forEach((slot) => {
       exercicios.push(slot.principal);
     });
   });
+  return exercicios;
+}
+
+// ─── Gerar treino fixo do dia ─────────────────────────────────────────────
+
+export function gerarTreinoDoDia(diaSemana) {
+  const estrutura = estruturaSemana[diaSemana] || estruturaSemana[1];
+  const exercicios = estrutura.slotsCustomizados
+    ? expandirSlotsCustomizados(estrutura.slotsCustomizados)
+    : expandirGrupos(estrutura.grupos ?? []);
 
   return { id: estrutura.id, titulo: estrutura.titulo, exercicios };
 }

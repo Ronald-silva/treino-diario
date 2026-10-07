@@ -4,11 +4,13 @@ function formatarAlvo(exercicio) {
   const repeticoes = exercicio.repsMin === exercicio.repsMax
     ? exercicio.repsMin
     : `${exercicio.repsMin}–${exercicio.repsMax}`;
+  const unidade = exercicio.unidade === 'segundos' ? 's' : exercicio.unidade === 'minutos' ? 'min' : '';
+  const alvo = unidade ? `${repeticoes}${unidade}` : `${repeticoes}`;
   const rirMaximo = exercicio.rirAlvoMax ?? exercicio.rirAlvo;
   const rir = rirMaximo > exercicio.rirAlvo
     ? `${exercicio.rirAlvo}–${rirMaximo}`
     : exercicio.rirAlvo;
-  return `${exercicio.series} x ${repeticoes} · RIR ${rir}`;
+  return `${exercicio.series} x ${alvo} · RIR ${rir}`;
 }
 
 function formatarNumero(valor) {
