@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   carregarSessaoDoTreino,
   concluirSessao,
+  concluirSessaoMinima,
   definirAquecimento,
   editarSerie,
+  exercicioConcluido,
   getDataLocal,
+  marcarExercicioManual,
   reabrirSessao,
   registrarSerie,
   removerSerie,
@@ -43,7 +46,7 @@ export function useDataLocalAtual() {
 function sessaoAtingiuPrescricao(sessao, treino) {
   return treino.exercicios.every((exercicio) => {
     const entrada = sessao.exercicios.find((item) => item.exercicioId === exercicio.id);
-    return (entrada?.series.length ?? 0) >= exercicio.series;
+    return exercicioConcluido(entrada, exercicio);
   });
 }
 
@@ -130,9 +133,36 @@ export function useSessao(data, treinoBase, treinoProgramado = treinoBase) {
     aplicarResultado(definirAquecimento(sessao, feito))
   ), [aplicarResultado, sessao]);
 
+  const marcarManual = useCallback((exercicioId, concluido) => {
+    let resultado = marcarExercicioManual(sessao, exercicioId, concluido);
+    let concluiuAgora = false;
+
+    if (
+      resultado.ok
+      && treino
+      && !resultado.sessao.concluidaEm
+      && sessaoAtingiuPrescricao(resultado.sessao, treino)
+    ) {
+      resultado = concluirSessao(resultado.sessao);
+      concluiuAgora = Boolean(resultado.sessao.concluidaEm);
+    }
+
+    aplicarResultado(resultado);
+    return { ...resultado, concluiuAgora };
+  }, [aplicarResultado, sessao, treino]);
+
   const concluir = useCallback(() => {
     const jaEstavaConcluida = Boolean(sessao.concluidaEm);
     const resultado = aplicarResultado(concluirSessao(sessao));
+    return {
+      ...resultado,
+      concluiuAgora: resultado.ok && !jaEstavaConcluida,
+    };
+  }, [aplicarResultado, sessao]);
+
+  const concluirMinima = useCallback(() => {
+    const jaEstavaConcluida = Boolean(sessao.concluidaEm);
+    const resultado = aplicarResultado(concluirSessaoMinima(sessao));
     return {
       ...resultado,
       concluiuAgora: resultado.ok && !jaEstavaConcluida,
@@ -165,8 +195,13 @@ export function useSessao(data, treinoBase, treinoProgramado = treinoBase) {
       const entrada = sessao.exercicios.find((item) => item.exercicioId === exercicio.id);
       const quantidade = entrada?.series.length ?? 0;
       totalSeries += exercicio.series;
-      seriesFeitas += Math.min(quantidade, exercicio.series);
-      if (quantidade >= exercicio.series) exerciciosFeitos += 1;
+      if (entrada?.concluidoManual) {
+        seriesFeitas += exercicio.series;
+        exerciciosFeitos += 1;
+      } else {
+        seriesFeitas += Math.min(quantidade, exercicio.series);
+        if (quantidade >= exercicio.series) exerciciosFeitos += 1;
+      }
     });
 
     return {
@@ -188,7 +223,9 @@ export function useSessao(data, treinoBase, treinoProgramado = treinoBase) {
     editar,
     remover,
     marcarAquecimento,
+    marcarManual,
     concluir,
+    concluirMinima,
     reabrir,
     resetar,
     descartarErro,

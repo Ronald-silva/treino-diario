@@ -14,11 +14,23 @@ import {
   carregarSessao,
   carregarSessaoDoTreino,
   concluirSessao,
+  concluirSessaoMinima,
+  definirAquecimento,
+  exercicioConcluido,
   getChaveSessao,
   getDataLocal,
+  marcarExercicioManual,
+  reabrirSessao,
   registrarSerie,
   resetarSessao,
 } from './sessao';
+
+function atingiuPrescricao(sessao, treino) {
+  return treino.exercicios.every((exercicio) => {
+    const entrada = sessao.exercicios.find((item) => item.exercicioId === exercicio.id);
+    return exercicioConcluido(entrada, exercicio);
+  });
+}
 
 class LocalStorageEmMemoria {
   constructor() {
@@ -216,6 +228,73 @@ describe('sessão de treino v2', () => {
     expect(carregarSessao(TREINO_A.data)).toEqual(antiga);
   });
 
+  it('marca exercício como concluído manualmente sem séries e persiste', () => {
+    const sessao = carregarSessaoDoTreino(TREINO_A);
+    const entrada = sessao.exercicios[0];
+    expect(entrada.series).toHaveLength(0);
+    expect(exercicioConcluido(entrada)).toBe(false);
+
+    const marcado = marcarExercicioManual(sessao, TREINO_A.exercicioIds[0], true);
+    expect(marcado.ok).toBe(true);
+    const entradaMarcada = marcado.sessao.exercicios[0];
+    expect(entradaMarcada.concluidoManual).toBe(true);
+    expect(exercicioConcluido(entradaMarcada)).toBe(true);
+
+    const recarregada = carregarSessao(TREINO_A.data);
+    const entradaRecarregada = recarregada.exercicios.find((e) => e.exercicioId === TREINO_A.exercicioIds[0]);
+    expect(entradaRecarregada.concluidoManual).toBe(true);
+    expect(entradaRecarregada.series).toHaveLength(0);
+  });
+
+  it('desmarca exercício concluído manualmente', () => {
+    const sessao = carregarSessaoDoTreino(TREINO_A);
+    const marcado = marcarExercicioManual(sessao, TREINO_A.exercicioIds[0], true);
+    expect(marcado.ok).toBe(true);
+
+    const desmarcado = marcarExercicioManual(marcado.sessao, TREINO_A.exercicioIds[0], false);
+    expect(desmarcado.ok).toBe(true);
+    expect(desmarcado.sessao.exercicios[0].concluidoManual).toBeUndefined();
+    expect(exercicioConcluido(desmarcado.sessao.exercicios[0])).toBe(false);
+  });
+
+  it('versão mínima registra minima: true e conta como dia concluído', () => {
+    const sessao = carregarSessaoDoTreino(TREINO_A);
+    expect(sessao.minima).toBeUndefined();
+
+    const resultado = concluirSessaoMinima(sessao);
+    expect(resultado.ok).toBe(true);
+    expect(resultado.sessao.minima).toBe(true);
+    expect(resultado.sessao.concluidaEm).toBeTruthy();
+    expect(carregarHistorico()).toEqual([TREINO_A.data]);
+  });
+
+  it('versão mínima concluída 2x não duplica no histórico', () => {
+    const sessao = carregarSessaoDoTreino(TREINO_A);
+    const primeira = concluirSessaoMinima(sessao);
+    const segunda = concluirSessaoMinima(primeira.sessao);
+
+    expect(primeira.ok).toBe(true);
+    expect(segunda.ok).toBe(true);
+    expect(segunda.sessao.concluidaEm).toBe(primeira.sessao.concluidaEm);
+    expect(carregarHistorico()).toEqual([TREINO_A.data]);
+  });
+
+  it('sessão antiga sem campos novos continua carregando', () => {
+    const antiga = {
+      v: 2,
+      data: TREINO_A.data,
+      treinoId: TREINO_A.treinoId,
+      iniciadaEm: '2026-10-06T07:00:00.000-03:00',
+      concluidaEm: '2026-10-06T08:00:00.000-03:00',
+      exercicios: [{ exercicioId: 'puxada-frente-polia-alta', series: [] }],
+    };
+    localStorage.setItem(getChaveSessao(TREINO_A.data), JSON.stringify(antiga));
+
+    const carregada = carregarSessao(TREINO_A.data);
+    expect(carregada).toEqual(antiga);
+    expect(carregada.minima).toBeUndefined();
+  });
+
   it.each([
     ['4x10', { series: 4, repsMin: 10, repsMax: 10 }],
     ['3x12', { series: 3, repsMin: 12, repsMax: 12 }],
@@ -228,5 +307,104 @@ describe('sessão de treino v2', () => {
 
     expect(getSemanaDoAno(primeiroDeJaneiro)).toBe(1);
     expect(getInfoCiclo(primeiroDeJaneiro).semanaNo).toBe(1);
+  });
+
+  it('marcar último exercício manualmente dispara conclusão automática (sem depender do aquecimento)', () => {
+    salvarConfigPrograma('2026-10-05');
+    const treinoBase = gerarTreinoDoDia(1);
+    const semana = calcularSemanaPrograma('2026-10-05', TREINO_A.data);
+    const treino = aplicarFase(treinoBase, semana);
+    expect(treino.exercicios.length).toBeGreaterThanOrEqual(2);
+
+    let sessao = carregarSessaoDoTreino({
+      data: TREINO_A.data,
+      treinoId: treino.id,
+      exercicios: treino.exercicios,
+      programa: treino.programa,
+    });
+    expect(sessao.concluidaEm).toBeNull();
+
+    treino.exercicios.slice(0, -1).forEach((ex) => {
+      const r = marcarExercicioManual(sessao, ex.id, true);
+      sessao = r.sessao;
+      expect(sessao.concluidaEm).toBeNull();
+    });
+
+    expect(atingiuPrescricao(sessao, treino)).toBe(false);
+
+    const ultimoId = treino.exercicios.at(-1).id;
+    let resultado = marcarExercicioManual(sessao, ultimoId, true);
+    sessao = resultado.sessao;
+
+    let concluiuAgora = false;
+    if (
+      resultado.ok
+      && !sessao.concluidaEm
+      && atingiuPrescricao(sessao, treino)
+    ) {
+      resultado = concluirSessao(resultado.sessao);
+      concluiuAgora = Boolean(resultado.sessao.concluidaEm);
+    }
+
+    expect(concluiuAgora).toBe(true);
+    expect(resultado.sessao.concluidaEm).toBeTruthy();
+    expect(carregarHistorico()).toEqual([TREINO_A.data]);
+  });
+
+  it('aquecimento não bloqueia a conclusão automática nem dispara sozinho', () => {
+    salvarConfigPrograma('2026-10-05');
+    const treinoBase = gerarTreinoDoDia(1);
+    const semana = calcularSemanaPrograma('2026-10-05', TREINO_A.data);
+    const treino = aplicarFase(treinoBase, semana);
+    let sessao = carregarSessaoDoTreino({
+      data: TREINO_A.data,
+      treinoId: treino.id,
+      exercicios: treino.exercicios,
+      programa: treino.programa,
+    });
+
+    const aquecido = definirAquecimento(sessao, true);
+    sessao = aquecido.sessao;
+    expect(sessao.aquecimentoFeito).toBe(true);
+    expect(sessao.concluidaEm).toBeNull();
+
+    let resultado;
+    treino.exercicios.forEach((ex) => {
+      resultado = marcarExercicioManual(sessao, ex.id, true);
+      sessao = resultado.sessao;
+    });
+
+    if (resultado.ok && !sessao.concluidaEm && atingiuPrescricao(sessao, treino)) {
+      resultado = concluirSessao(resultado.sessao);
+    }
+    expect(resultado.sessao.concluidaEm).toBeTruthy();
+
+    const historico = carregarHistorico();
+    expect(historico).toEqual([TREINO_A.data]);
+
+    const duasVezes = concluirSessao(resultado.sessao);
+    expect(duasVezes.sessao.concluidaEm).toBe(resultado.sessao.concluidaEm);
+    expect(carregarHistorico()).toEqual([TREINO_A.data]);
+  });
+
+  it('concluir 2x não duplica no histórico e reabrir + concluir mantém 1 data', () => {
+    const sessao = carregarSessaoDoTreino(TREINO_A);
+    const primeira = concluirSessao(sessao);
+    expect(primeira.ok).toBe(true);
+    expect(carregarHistorico()).toEqual([TREINO_A.data]);
+
+    const segunda = concluirSessao(primeira.sessao);
+    expect(segunda.sessao.concluidaEm).toBe(primeira.sessao.concluidaEm);
+    expect(carregarHistorico()).toEqual([TREINO_A.data]);
+
+    const reaberta = reabrirSessao(segunda.sessao);
+    expect(reaberta.ok).toBe(true);
+    expect(reaberta.sessao.concluidaEm).toBeNull();
+    expect(carregarHistorico()).toEqual([]);
+
+    const deNova = concluirSessao(reaberta.sessao);
+    expect(deNova.ok).toBe(true);
+    expect(deNova.sessao.concluidaEm).toBeTruthy();
+    expect(carregarHistorico()).toEqual([TREINO_A.data]);
   });
 });

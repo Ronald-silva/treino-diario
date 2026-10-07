@@ -70,6 +70,13 @@ export function criarSessaoVazia({
   return sessao;
 }
 
+export function exercicioConcluido(entrada, exercicioPrescricao) {
+  if (!entrada) return false;
+  if (entrada.concluidoManual) return true;
+  const seriesAlvo = exercicioPrescricao?.series ?? entrada.prescricao?.series ?? 0;
+  return seriesAlvo > 0 && (entrada.series?.length ?? 0) >= seriesAlvo;
+}
+
 function numeroValido(valor) {
   return typeof valor === 'number' && Number.isFinite(valor) && valor >= 0;
 }
@@ -109,12 +116,14 @@ function sessaoValida(sessao, dataEsperada) {
     && typeof sessao.iniciadaEm === 'string'
     && (typeof sessao.concluidaEm === 'string' || sessao.concluidaEm === null)
     && (sessao.aquecimentoFeito === undefined || typeof sessao.aquecimentoFeito === 'boolean')
+    && (sessao.minima === undefined || typeof sessao.minima === 'boolean')
     && (sessao.programa === undefined || programaValido(sessao.programa))
     && Array.isArray(sessao.exercicios)
     && sessao.exercicios.every((entrada) => (
       entrada
       && typeof entrada.exercicioId === 'string'
       && (entrada.prescricao === undefined || prescricaoValida(entrada.prescricao))
+      && (entrada.concluidoManual === undefined || typeof entrada.concluidoManual === 'boolean')
       && Array.isArray(entrada.series)
       && entrada.series.every(serieValida)
     ));
@@ -257,6 +266,19 @@ export function removerSerie(sessao, exercicioId, serieIndex) {
 export function definirAquecimento(sessao, feito) {
   const atualizada = { ...sessao, aquecimentoFeito: Boolean(feito) };
   return salvarSessao(atualizada);
+}
+
+export function marcarExercicioManual(sessao, exercicioId, concluido) {
+  const atualizada = atualizarExercicio(sessao, exercicioId, (entrada) => ({
+    ...entrada,
+    concluidoManual: concluido ? true : undefined,
+  }));
+  return salvarSessao(atualizada);
+}
+
+export function concluirSessaoMinima(sessao) {
+  const minima = sessao.minima ? sessao : { ...sessao, minima: true };
+  return concluirSessao(minima);
 }
 
 export function carregarHistorico() {
