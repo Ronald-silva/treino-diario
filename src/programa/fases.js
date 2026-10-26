@@ -1,28 +1,28 @@
 export const CONFIGURACAO_FASES = Object.freeze({
-  FIM_FASE_ADAPTACAO: 4,
-  FIM_FASE_CONSOLIDACAO: 8,
-  PRIMEIRA_SEMANA_DELOAD: 14,
+  FIM_FASE_ADAPTACAO: 2,  // Reduzido: 2 semanas são suficientes
+  FIM_FASE_CONSOLIDACAO: 6, // Semanas 3-6: volume moderado-alto
+  PRIMEIRA_SEMANA_DELOAD: 13,
   INTERVALO_DELOAD: 6,
-  SERIES_ADAPTACAO: 2,
-  SERIES_CONSOLIDACAO: 3,
-  RIR_ADAPTACAO: 3,
-  RIR_CONSOLIDACAO: 2,
-  RIR_COMPOSTO_PROGRESSAO_MIN: 1,
-  RIR_COMPOSTO_PROGRESSAO_MAX: 2,
-  RIR_ISOLADOR_PROGRESSAO: 2,
+  SERIES_ADAPTACAO: 3,  // Aumentado de 2 para 3
+  SERIES_CONSOLIDACAO: 4, // Aumentado de 3 para 4 (hipertrofia)
+  RIR_ADAPTACAO: 2,  // Reduzido de 3 para 2 (mais intenso)
+  RIR_CONSOLIDACAO: 1,  // Reduzido de 2 para 1 (muito próximo da falha)
+  RIR_COMPOSTO_PROGRESSAO_MIN: 0,  // Falha técnica em compostos
+  RIR_COMPOSTO_PROGRESSAO_MAX: 1,
+  RIR_ISOLADOR_PROGRESSAO: 1,  // Próximo da falha em isoladores
   RIR_DELOAD: 4,
-  SERIES_AGACHAMENTO_FASE3_SEMANA_9_14: 3,
+  SERIES_AGACHAMENTO_FASE3_SEMANA_9_14: 4,  // Aumentado de 3 para 4
   LIMITES_ADAPTACAO: Object.freeze({
-    push: 4,
-    pull: 5,
-    legs: 5,
+    push: 6,  // Sem limites - todos os exercícios
+    pull: 6,
+    legs: 7,
   }),
 });
 
 export const NOMES_FASES = Object.freeze({
-  1: 'Adaptação',
-  2: 'Consolidação',
-  3: 'Progressão',
+  1: 'Adaptação Neural',
+  2: 'Hipertrofia Moderada',
+  3: 'Hipertrofia Máxima',
 });
 
 export const IDS_EXERCICIOS_COMPOSTOS = Object.freeze([

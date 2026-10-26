@@ -207,9 +207,9 @@ describe('sessão de treino v2', () => {
 
     expect(treinoRecalculado.programa.semana).toBeGreaterThan(1);
     expect(recarregada.programa).toMatchObject({ fase: 1, semana: 1, deload: false });
-    expect(recarregada.exercicios).toHaveLength(4);
+    expect(recarregada.exercicios).toHaveLength(6); // Fase 1 agora tem 6 exercícios (programa hipertrofia)
     recarregada.exercicios.forEach((entrada) => {
-      expect(entrada.prescricao).toMatchObject({ series: 2, rirAlvo: 3 });
+      expect(entrada.prescricao).toMatchObject({ series: 3, rirAlvo: 2 }); // Fase 1: 3 séries, RIR 2
     });
   });
 
