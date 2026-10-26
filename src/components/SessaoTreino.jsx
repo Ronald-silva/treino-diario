@@ -391,6 +391,7 @@ function DialogoReset({ aberto, onFechar, onConfirmar }) {
 export default function SessaoTreino({ treino, controle, onConcluida }) {
   const [status, setStatus] = useState('');
   const [confirmandoReset, setConfirmandoReset] = useState(false);
+  const [concluindo, setConcluindo] = useState(false);
   const { sessao, progresso, erro } = controle;
   const programa = treino.programa;
   const sessaoConcluida = Boolean(sessao.concluidaEm);
@@ -402,10 +403,21 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
   ));
 
   const concluir = () => {
+    setConcluindo(true);
     const resultado = controle.concluir();
     if (resultado.ok) {
-      setStatus(resultado.concluiuAgora ? 'Treino concluído.' : 'O treino já estava concluído.');
-      if (resultado.concluiuAgora) onConcluida();
+      setStatus(resultado.concluiuAgora ? 'Treino concluído! 🔥' : 'O treino já estava concluído.');
+      if (resultado.concluiuAgora) {
+        // Pequeno delay para mostrar animação
+        setTimeout(() => {
+          setConcluindo(false);
+          onConcluida();
+        }, 500);
+      } else {
+        setConcluindo(false);
+      }
+    } else {
+      setConcluindo(false);
     }
   };
 
@@ -452,6 +464,15 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
 
       <p className="sr-only" aria-live="polite" aria-atomic="true">{status}</p>
 
+      {status && !erro ? (
+        <div className="session-save-alert bg-emerald-500/10 border-emerald-500/30 mb-4 animate-fade-in" role="status">
+          <span className="text-emerald-300">{status}</span>
+          <button type="button" className="session-button" onClick={() => setStatus('')}>
+            OK
+          </button>
+        </div>
+      ) : null}
+
       {erro ? (
         <div className="session-save-alert" role="alert">
           <span>{erro === 'Não foi possível salvar.' ? 'Não foi possível salvar. Tente novamente.' : erro}</span>
@@ -462,7 +483,11 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
       ) : null}
 
       {sessaoConcluida ? (
-        <div className="session-completed-banner">✓ Treino concluído e salvo neste aparelho</div>
+        <div className="session-completed-banner animate-pulse-slow">
+          <span className="text-2xl">🔥</span>
+          <span>Treino concluído e salvo neste aparelho</span>
+          <span className="text-2xl">💪</span>
+        </div>
       ) : null}
 
       <AquecimentoTreino
@@ -498,8 +523,22 @@ export default function SessaoTreino({ treino, controle, onConcluida }) {
       </div>
 
       <div className="session-footer-actions mt-4">
-        <button type="button" className="session-button primary" onClick={concluir}>
-          {sessaoConcluida ? '✓ Concluir treino' : 'Concluir treino'}
+        <button 
+          type="button" 
+          className={`session-button primary ${concluindo ? 'opacity-75 scale-95' : ''} transition-all duration-300`}
+          onClick={concluir}
+          disabled={concluindo}
+        >
+          {concluindo ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Concluindo...
+            </span>
+          ) : sessaoConcluida ? (
+            '✓ Treino Concluído'
+          ) : (
+            'Concluir Treino'
+          )}
         </button>
         {sessaoConcluida ? (
           <button type="button" className="session-button" onClick={reabrir}>
